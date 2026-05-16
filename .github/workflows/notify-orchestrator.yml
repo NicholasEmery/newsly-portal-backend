@@ -1,0 +1,28 @@
+name: Notify orchestrator on backend main change
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call orchestrator repository_dispatch
+        env:
+          ORCHESTRATOR_REPO: "NicholasEmery/newsly-portal-orchestrator"
+          GH_TOKEN: ${{ secrets.ORCHESTRATOR_PAT }}
+        run: |
+          payload=$(jq -n \
+            --arg event_type "backend-updated" \
+            --arg source_repo "$GITHUB_REPOSITORY" \
+            '{event_type: $event_type, client_payload: {source_repo: $source_repo}}')
+
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/$ORCHESTRATOR_REPO/dispatches \
+            -d "$payload"
