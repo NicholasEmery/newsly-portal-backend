@@ -1,37 +1,32 @@
-### Stage 1: build da aplicação NestJS
 FROM node:26-alpine AS builder
-
 WORKDIR /app
 
-# Copia arquivos de dependências
+# Copia os arquivos de dependências
 COPY package*.json ./
+RUN npm ci
 
-# Instala todas as dependências (incluindo devDependencies para o build)
-RUN npm install
-
-# Copia o restante do código (inclui prisma/schema.prisma)
+# Copia o restante do código
 COPY . .
 
-# Gera os clientes do Prisma (necessário para o build)
-RUN npx prisma generate
-
-# Build para a pasta dist
+# Build da aplicação (gera dist)
 RUN npm run build
 
-
-### Stage 2: imagem final de produção
+# ---------------------------
+# Runtime image
+# ---------------------------
 FROM node:26-alpine AS runner
-
-ENV NODE_ENV=production
 WORKDIR /app
 
-# Copia apenas o necessário do estágio de build
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
+# Cria usuário não-root
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Copia apenas o necessário da imagem builder
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY prisma ./prisma
 
-# Diretório padrão de uploads (pode ser sobrescrito via variável de ambiente / compose)
-ENV UPLOAD_DIR=/app/uploads-file
-RUN mkdir -p ${UPLOAD_DIR}
+USER appuser
 
-CMD ["npm", "run", "start:prod"]
+# Prisma generate será rodado em runtime, junto com o start
+CMD npx prisma generate && node dist/main.js
