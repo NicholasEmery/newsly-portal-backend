@@ -6,17 +6,14 @@ WORKDIR /app
 # Copia arquivos de dependências
 COPY package*.json ./
 
-# Copia o schema do Prisma para gerar os clientes
-COPY prisma ./prisma
-
-# Gera os clientes do Prisma (necessário para o build)
-RUN npx prisma generate
-
 # Instala todas as dependências (incluindo devDependencies para o build)
 RUN npm install
 
-# Copia o restante do código
+# Copia o restante do código (inclui prisma/schema.prisma)
 COPY . .
+
+# Gera os clientes do Prisma (necessário para o build)
+RUN npx --no-install prisma generate
 
 # Build para a pasta dist
 RUN npm run build
@@ -32,7 +29,6 @@ WORKDIR /app
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
 
 # Diretório padrão de uploads (pode ser sobrescrito via variável de ambiente / compose)
 ENV UPLOAD_DIR=/app/uploads-file
