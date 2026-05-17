@@ -12,7 +12,7 @@ import { ConfigService } from "@nestjs/config";
 // Swagger: Para documentação da API
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
-// Função bootstrap: Inicializa e configura a aplicação NestJS
+// Função bootstrap:Inicializa e configura a aplicação NestJS
 // Lógica: Cria app, configura validação, Swagger, e inicia servidor
 // Caso de uso: Ponto de entrada da aplicação
 async function bootstrap() {
