@@ -13,7 +13,7 @@ RUN npm install
 COPY . .
 
 # Gera os clientes do Prisma (necessário para o build)
-RUN npx --no-install prisma generate
+RUN npx prisma generate
 
 # Build para a pasta dist
 RUN npm run build
