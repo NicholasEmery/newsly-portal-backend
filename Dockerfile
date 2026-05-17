@@ -8,10 +8,11 @@ RUN npm ci
 # Copia o restante do código
 COPY . .
 
-# Prisma precisa do .env montado como volume
-# Não copiamos o .env para dentro da imagem
-# Apenas usamos o arquivo montado em /app/.env
-RUN export $(cat /app/.env | xargs) && \
+# Copia o .env para dentro da imagem (precisa estar no contexto)
+COPY .env .env
+
+# Carrega variáveis do .env e roda prisma generate
+RUN export $(cat .env | xargs) && \
     echo ">>> DATABASE_URL=$DATABASE_URL" && \
     npx prisma generate || (echo ">>> ERRO no prisma generate" && exit 1)
 
