@@ -1,14 +1,21 @@
 FROM node:26-alpine AS builder
 WORKDIR /app
 
-# Copia os arquivos de dependências
+# Copia arquivos de dependências
 COPY package*.json ./
 RUN npm ci
 
 # Copia o restante do código
 COPY . .
 
-# Build da aplicação (gera dist)
+# Carrega a variável DATABASE_URL no build
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
+# Gera os clientes do Prisma (precisa da variável DATABASE_URL)
+RUN npx prisma generate
+
+# Compila a aplicação
 RUN npm run build
 
 # ---------------------------
@@ -28,5 +35,4 @@ COPY prisma ./prisma
 
 USER appuser
 
-# Prisma generate será rodado em runtime, junto com o start
-CMD npx prisma generate && node dist/main.js
+CMD ["node", "dist/main.js"]
