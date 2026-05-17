@@ -12,8 +12,11 @@ COPY . .
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 
-# Gera os clientes do Prisma (precisa da variável DATABASE_URL)
-RUN npx prisma generate
+# Log da variável para debug
+RUN echo ">>> DATABASE_URL no build: $DATABASE_URL"
+
+# Gera os clientes do Prisma
+RUN npx prisma generate || (echo ">>> ERRO no prisma generate" && exit 1)
 
 # Compila a aplicação
 RUN npm run build
@@ -24,10 +27,8 @@ RUN npm run build
 FROM node:26-alpine AS runner
 WORKDIR /app
 
-# Cria usuário não-root
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Copia apenas o necessário da imagem builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
@@ -35,4 +36,7 @@ COPY prisma ./prisma
 
 USER appuser
 
-CMD ["node", "dist/main.js"]
+# Log da variável no runtime
+CMD echo ">>> DATABASE_URL no runtime: $DATABASE_URL" && \
+    npx prisma generate && \
+    node dist/main.js
