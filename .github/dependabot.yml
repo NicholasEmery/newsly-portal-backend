@@ -1,0 +1,55 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    pull-request-branch-name:
+      separator: "/"
+    commit-message:
+      prefix: "deps"
+      include: scope
+    assignees:
+      - "NicholasEmery"
+    labels:
+      - "dependencies"
+      - "automated"
+    groups:
+      backend-frameworks:
+        patterns:
+          - "express*"
+          - "@nestjs/*"
+          - "nestjs*"
+      security-and-auth:
+        patterns:
+          - "jsonwebtoken"
+          - "bcryptjs"
+          - "helmet"
+          - "cookie-parser"
+      db-and-cache:
+        patterns:
+          - "mongoose*"
+          - "pg"
+          - "mysql"
+          - "redis"
+      utilities:
+        patterns:
+          - "dotenv"
+          - "cors"
+          - "validator"
+          - "multer"
+          - "nodemailer"
+          - "sharp"
+          - "uuid"
+      logging-and-dev:
+        patterns:
+          - "nodemon"
+          - "morgan"
+          - "winston"
+          - "express-validator"
+      aws-and-cloud:
+        patterns:
+          - "aws-sdk"
+    rebase-strategy: "auto"
+  
+
