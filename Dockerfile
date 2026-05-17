@@ -6,14 +6,11 @@ WORKDIR /app
 # Copia arquivos de dependências
 COPY package*.json ./
 
-# Instala o Prisma CLI globalmente para gerar os clientes
-RUN npm install -g prisma
-
 # Copia o schema do Prisma para gerar os clientes
 COPY prisma ./prisma
 
 # Gera os clientes do Prisma (necessário para o build)
-RUN prisma generate
+RUN npx prisma generate
 
 # Instala todas as dependências (incluindo devDependencies para o build)
 RUN npm install
