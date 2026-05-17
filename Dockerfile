@@ -8,15 +8,13 @@ RUN npm ci
 # Copia o restante do código
 COPY . .
 
-# Carrega a variável DATABASE_URL no build
-ARG DATABASE_URL
-ENV DATABASE_URL=$DATABASE_URL
+# Copia o .env do backend para dentro da imagem
+COPY .env .env
 
-# Log da variável para debug
-RUN echo ">>> DATABASE_URL no build: $DATABASE_URL"
-
-# Gera os clientes do Prisma
-RUN npx prisma generate || (echo ">>> ERRO no prisma generate" && exit 1)
+# Carrega variáveis do .env e roda prisma generate
+RUN export $(cat .env | xargs) && \
+    echo ">>> DATABASE_URL=$DATABASE_URL" && \
+    npx prisma generate || (echo ">>> ERRO no prisma generate" && exit 1)
 
 # Compila a aplicação
 RUN npm run build
@@ -36,7 +34,6 @@ COPY prisma ./prisma
 
 USER appuser
 
-# Log da variável no runtime
 CMD echo ">>> DATABASE_URL no runtime: $DATABASE_URL" && \
     npx prisma generate && \
     node dist/main.js
