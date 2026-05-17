@@ -1,0 +1,315 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ====================
+// ENUMS
+// ====================
+
+enum Role {
+  ADMIN
+  CREATOR
+  COLLABORATOR
+}
+
+enum Tag {
+  TRENDING
+  LATEST
+  TOP_NOTICE
+}
+
+enum Category {
+  SPOTLIGHT
+}
+
+enum PostStatus {
+  PENDING
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CollaboratorPermission {
+  NO_REQUEST_ARCHIVER
+  NO_REQUEST_EDITOR
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  ALL
+  POST_ALL // Todos colaboradores e creator do post
+  POST_COLLABORATORS // Apenas colaboradores do post
+  USERS // Lista específica
+}
+
+// ====================
+// USER-RELATED MODELS
+// ====================
+
+model User {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  email         String   @unique
+  name          String
+  photo         String
+  role          Role?
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // relações
+  sessions             DeviceSession[]
+  localAuth            LocalAuth?
+  socialAuths          SocialAuth[]
+  posts                Post[]               @relation("AuthoredPosts")
+  collaborations       PostCollaborator[]
+  archiveRequests      PostArchiveRequest[] @relation("RequestedBy")
+  approvedRequests     PostArchiveRequest[] @relation("ApprovedBy")
+  editRequests         EditRequest[]        @relation("Requester")
+  creationRequests     CreationRequest[]    @relation("Requester")
+  createQuota          Int? // Limite de posts que o usuário pode criar
+  createQuotaExpiresAt DateTime? // Expiração da quota
+  comments             Comment[]
+  postLikes            PostLike[]
+  postFavorites        PostFavorite[]
+  readNotifications    String[] // IDs das notificações lidas pelo usuário
+  invitedCollaborators PostCollaborator[]   @relation("InvitedBy")
+  editReviews          EditRequest[]        @relation("Reviewer")
+  creationReviews      CreationRequest[]    @relation("AdminReviewer")
+  postArchives         PostArchive[]
+  postVersions         PostVersion[]
+}
+
+model LocalAuth {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  passwordHash String // obrigatório
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId]) // cada usuário só pode ter um login local
+}
+
+model SocialAuth {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  provider   String // "google", "github", "facebook"
+  providerId String // ID único no provider
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([provider, providerId]) // garante que não haja duplicação
+}
+
+model DeviceSession {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id]) // relação explícita
+
+  deviceId         String?
+  userAgent        String?
+  ip               String?
+  refreshTokenHash String?
+  refreshExpiresAt DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+// ====================
+// POST-RELATED MODELS
+// ====================
+
+model Post {
+  id              String               @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  imageUrl        String
+  content         String
+  categories      Category[] // Categorias do post
+  tags            Tag[]                @default([TRENDING]) // Tags do post
+  status          PostStatus
+  publishedAt     DateTime?
+  creatorId       String               @db.ObjectId
+  creator         User                 @relation("AuthoredPosts", fields: [creatorId], references: [id])
+  collaborators   PostCollaborator[]
+  archiveRequests PostArchiveRequest[]
+  editRequests    EditRequest[]
+  creationRequest CreationRequest?
+  comments        Comment[]
+  likes           PostLike[]
+  favorites       PostFavorite[]
+  commentCount    Int                  @default(0)
+  likeCount       Int                  @default(0)
+  favoriteCount   Int                  @default(0)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  postArchives    PostArchive[]
+  versions        PostVersion[]
+}
+
+model PostVersion {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  postId     String     @db.ObjectId
+  post       Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  title      String
+  imageUrl   String
+  content    String
+  categories Category[]
+  tags       Tag[]
+  status     PostStatus
+  editedById String     @db.ObjectId // Quem fez a edição
+  editedBy   User       @relation(fields: [editedById], references: [id])
+  reason     String? // Motivo da edição (opcional)
+  createdAt  DateTime   @default(now()) // Timestamp da edição - use como "versão" no UI
+
+  @@index([postId, createdAt]) // Para ordenar versões por post e tempo
+}
+
+model PostCollaborator {
+  id            String                   @id @default(auto()) @map("_id") @db.ObjectId
+  postId        String                   @db.ObjectId
+  post          Post                     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId        String                   @db.ObjectId
+  user          User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitedBy     String                   @db.ObjectId
+  invitedByUser User                     @relation("InvitedBy", fields: [invitedBy], references: [id])
+  permissions   CollaboratorPermission[]
+
+  @@unique([postId, userId]) // Um usuário pode ser colaborador de um post apenas uma vez
+}
+
+model PostArchive {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId     String   @db.ObjectId
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId     String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  archivedAt DateTime @default(now())
+}
+
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId    String   @db.ObjectId
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Adicione estes campos para suportar respostas
+  parentId String?   @db.ObjectId
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies  Comment[] @relation("CommentReplies")
+
+  @@index([postId])
+}
+
+model PostLike {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId    String   @db.ObjectId
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId]) // Um usuário pode dar like em um post apenas uma vez
+  @@index([postId])
+}
+
+model PostFavorite {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId    String   @db.ObjectId
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId]) // Um usuário pode favoritar um post apenas uma vez
+  @@index([postId])
+}
+
+// ====================
+// REQUEST-RELATED MODELS
+// ====================
+
+model PostArchiveRequest {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  postId        String        @db.ObjectId
+  post          Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  requestedById String        @db.ObjectId
+  requestedBy   User          @relation("RequestedBy", fields: [requestedById], references: [id])
+  status        RequestStatus @default(PENDING)
+  approvedById  String?       @db.ObjectId
+  approvedBy    User?         @relation("ApprovedBy", fields: [approvedById], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([postId, requestedById]) // Garante unicidade por post e usuário
+}
+
+model EditRequest {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  postId          String        @db.ObjectId
+  post            Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  requesterId     String        @db.ObjectId
+  requester       User          @relation("Requester", fields: [requesterId], references: [id])
+  targetRole      Role
+  proposedChanges Json // JSON com mudanças propostas
+  status          RequestStatus @default(PENDING)
+  reviewerId      String?       @db.ObjectId
+  reviewer        User?         @relation("Reviewer", fields: [reviewerId], references: [id])
+  reviewedAt      DateTime?
+  reason          String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model CreationRequest {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  postId          String        @db.ObjectId
+  post            Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  requesterId     String        @db.ObjectId
+  requester       User          @relation("Requester", fields: [requesterId], references: [id])
+  status          RequestStatus @default(PENDING)
+  adminReviewerId String?       @db.ObjectId
+  adminReviewer   User?         @relation("AdminReviewer", fields: [adminReviewerId], references: [id])
+  reviewedAt      DateTime?
+  reason          String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([postId])
+}
+
+// ====================
+// NOTIFICATION-RELATED MODELS
+// ====================
+
+model Notification {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  title          String
+  body           String
+  imageUrl       String?
+  linkUrl        String?
+  recipientsType NotificationType
+  recipients     String[] // Lista de userIds se type = USERS
+  createdAt      DateTime         @default(now())
+  expiresAt      DateTime
+  updatedAt      DateTime         @updatedAt
+}

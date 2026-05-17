@@ -8,4 +8,5 @@ Requisitos para funcionar corretamente:
 - Runner self-hosted no orchestrator com label `self-hosted` (o workflow do orchestrator está configurado para rodar em `self-hosted`).
 
 Notas de segurança:
+
 - Prefira usar um token de máquina (bot) com permissão mínima.

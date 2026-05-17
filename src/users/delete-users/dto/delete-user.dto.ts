@@ -1,0 +1,1 @@
+// No specific DTO needed for delete, but keeping for consistency
