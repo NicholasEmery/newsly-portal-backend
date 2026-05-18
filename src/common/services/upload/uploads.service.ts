@@ -1,9 +1,9 @@
 import { Injectable, BadRequestException, InternalServerErrorException } from "@nestjs/common";
-import { join, extname } from "path";
-import { promises as fs } from "fs";
 import axios from "axios";
 import { randomUUID } from "crypto";
+import { promises as fs } from "fs";
 import * as mime from "mime-types";
+import { join, extname } from "path";
 // import { fileTypeFromBuffer } from "file-type"; // Removido para facilitar testes
 
 @Injectable()

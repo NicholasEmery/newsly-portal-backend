@@ -1,7 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { UpdateUsersService } from "./update-users.service";
-import { PrismaService } from "../../database/prisma.service";
 import { TokenHelper } from "../../auth/util/generateTokens";
+import { PrismaService } from "../../database/prisma.service";
 
 const mockPrismaService = {
   user: {

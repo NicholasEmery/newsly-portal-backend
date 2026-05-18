@@ -1,20 +1,20 @@
 // Importações para o controller de edição de posts
 // Controller: Decorator para controlador
+import { Role } from "@generated/prisma/enums";
 import { Controller, Put, Body, UseGuards, Request, Param, Patch, Post } from "@nestjs/common";
 // AuthGuard: Guarda de autenticação
-import { AuthGuard } from "../../../auth/auth.guard";
-// RolesGuard: Guarda de roles
-import { RolesGuard } from "../../../auth/roles.guard";
-// Roles: Decorator para roles
-import { Roles } from "../../../auth/roles.decorator";
-// UpdatePostDto: DTO para edição
-import { UpdatePostDto } from "./dto/update-post.dto";
-// UpdatePostsService: Serviço de edição
-import { UpdatePostsService } from "./update-posts.service";
-// Role: Enum de roles
-import { Role } from "@generated/prisma/enums";
-// Request: Interface para request
 import { Request as ExpressRequest } from "express";
+import { UpdatePostDto } from "./dto/update-post.dto";
+import { UpdatePostsService } from "./update-posts.service";
+import { Roles } from "../../common/decorators/roles.decorator";
+import { AuthGuard } from "../../common/guards/auth.guard";
+// RolesGuard: Guarda de roles
+import { RolesGuard } from "../../common/guards/roles.guard";
+// Roles: Decorator para roles
+// UpdatePostDto: DTO para edição
+// UpdatePostsService: Serviço de edição
+// Role: Enum de roles
+// Request: Interface para request
 
 // Interface para request com user
 interface AuthenticatedRequest extends ExpressRequest {

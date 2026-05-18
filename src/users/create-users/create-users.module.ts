@@ -2,14 +2,14 @@
 // Module: Decorator do NestJS para definir um módulo
 import { Module } from "@nestjs/common";
 // CreateUsersService: Serviço para lógica de criação de usuários
-import { CreateUsersService } from "./create-users.service";
 // PrismaModule: Módulo que fornece PrismaService para acesso ao banco
-import { PrismaModule } from "../../database/prisma.module";
 // JwtModule: Para geração de tokens JWT
 import { JwtModule } from "@nestjs/jwt";
 import { UploadsService } from "src/common/services/upload/uploads.service";
+import { CreateUsersService } from "./create-users.service";
 import { TokensService } from "../../auth/tokens.service";
 import { TokenHelper } from "../../auth/util/generateTokens";
+import { PrismaModule } from "../../database/prisma.module";
 
 // Classe CreateUsersModule: Módulo NestJS para funcionalidades de criação de usuários
 // Define dependências, controllers e providers

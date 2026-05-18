@@ -1,15 +1,15 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { LocalService } from "../local.service";
-import { PrismaService } from "src/database/prisma.service";
-import { TokensService } from "../../tokens.service";
-import { CreateUsersService } from "src/users/create-users/create-users.service";
-import { EmailService } from "src/common/services/email/email.service";
-import { TokenHelper } from "../../util/generateTokens";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Test, TestingModule } from "@nestjs/testing";
 import { Cache } from "cache-manager";
-import { UserLocalSignInDto } from "./dto/local-signin.dto";
-import { UserLocalSignUpDto } from "./dto/local-signup.dto";
-import { SessionDto } from "../dto/session.dto";
+import { EmailService } from "src/common/services/email/email.service";
+import { PrismaService } from "src/database/prisma.service";
+import { CreateUsersService } from "src/users/create-users/create-users.service";
+import { SessionDto } from "../../dto/session.dto";
+import { TokensService } from "../../tokens.service";
+import { TokenHelper } from "../../util/generateTokens";
+import { UserLocalSignInDto } from "../dto/local-signin.dto";
+import { UserLocalSignUpDto } from "../dto/local-signup.dto";
+import { LocalService } from "../local.service";
 
 // Mocks
 const mockPrismaService = {

@@ -1,9 +1,9 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { EmailService } from "../email.service";
 import { ConfigService } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
 import * as fs from "fs";
-import * as path from "path";
 import * as nodemailer from "nodemailer";
+import * as path from "path";
+import { EmailService } from "../email.service";
 
 // Mock do fs
 jest.mock("fs");
@@ -49,7 +49,7 @@ describe("EmailService", () => {
     jest.clearAllMocks();
 
     mockConfigService.get.mockImplementation((key: string) => {
-      const config = {
+      const config: Record<string, unknown> = {
         SMTP_HOST: "smtp.example.com",
         SMTP_PORT: 587,
         SMTP_USER: "user@example.com",

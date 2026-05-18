@@ -1,5 +1,5 @@
-import { JwtService } from "@nestjs/jwt";
 import { Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
 import { PrismaService } from "src/database/prisma.service";
 import { TokenHelper } from "./util/generateTokens";
 
@@ -11,7 +11,7 @@ export class TokensService {
     private tokenHelper: TokenHelper,
   ) {}
 
-  async signAccessToken(userId: string, sessionId: string) {
+  signAccessToken(userId: string, sessionId: string) {
     const payload = { sub: userId, sid: sessionId };
     if (!process.env.ACCESS_EXPIRES_IN) {
       throw new InternalServerErrorException("ACCESS_EXPIRES_IN não está definido nas variáveis de ambiente");
@@ -32,7 +32,6 @@ export class TokensService {
     }
 
     expires.setDate(expires.getDate() + Number(process.env.REFRESH_EXPIRES_DAYS));
-                                         
 
     const hash = await this.tokenHelper.hashToken(token);
     await this.prisma.deviceSession.update({

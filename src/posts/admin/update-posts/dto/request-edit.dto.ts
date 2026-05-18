@@ -1,5 +1,5 @@
-import { IsObject, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
+import { IsObject, ValidateNested } from "class-validator";
 import { ProposedChangeDto } from "./proposed-change.dto";
 
 export class RequestEditDto {

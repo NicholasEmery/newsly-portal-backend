@@ -1,17 +1,17 @@
 // Importações para o serviço de edição de posts
 // Injectable: Decorator para injeção de dependências
+import { Post } from "@generated/prisma/browser";
+import { User } from "@generated/prisma/client";
+import { PostStatus, Role, RequestStatus } from "@generated/prisma/enums";
 import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
 // PrismaService: Acesso ao banco de dados
+import request from "supertest";
+import { RequestEditDto } from "./dto/request-edit.dto";
+import { UpdateCreationStatusDto } from "./dto/update-creation-status.dto";
+import { UpdatePostDto } from "./dto/update-post.dto";
 import { PrismaService } from "../../../database/prisma.service";
 // UpdatePostDto: DTO para edição
-import { UpdatePostDto } from "./dto/update-post.dto";
 // PostStatus: Enum de status
-import { PostStatus, Role, RequestStatus } from "@generated/prisma/enums";
-import { UpdateCreationStatusDto } from "./dto/update-creation-status.dto";
-import { Post } from "@generated/prisma/browser";
-import { RequestEditDto } from "./dto/request-edit.dto";
-import request from "supertest";
-import { User } from "@generated/prisma/client";
 
 // Classe UpdatePostsService: Serviço para edição de posts
 // Lógica: Valida permissões, cria requests de edição, aprova/rejeita
@@ -123,7 +123,7 @@ export class UpdatePostsService {
           content: filteredChanges.content,
           imageUrl: filteredChanges.image,
           categories: filteredChanges.categories,
-        }
+        },
       });
     } else if (request.targetRole === Role.CREATOR && isTargetUser) {
       // Creator aprova request de Collaborator, cria novo request para Admin

@@ -2,12 +2,12 @@
 // Module: Decorator para módulo
 import { Module } from "@nestjs/common";
 // CreatePostsController: Controlador
+import { UploadsService } from "src/common/services/upload/uploads.service";
 import { CreatePostsController } from "./create-posts.controller";
 // CreatePostsService: Serviço
 import { CreatePostsService } from "./create-posts.service";
 // PrismaModule: Módulo do banco
 import { PrismaModule } from "../../../database/prisma.module";
-import { UploadsService } from "src/common/services/upload/uploads.service";
 
 // Classe CreatePostsModule: Módulo para criação de posts
 // Providers: CreatePostsService

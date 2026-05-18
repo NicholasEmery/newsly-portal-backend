@@ -1,14 +1,5 @@
-import {
-  IsString,
-  IsOptional,
-  IsArray,
-  IsEnum,
-  IsNotEmpty,
-  Length,
-  ArrayMaxSize,
-  IsUUID,
-} from "class-validator";
-import { Category} from "@generated/prisma/enums";
+import { Category } from "@generated/prisma/enums";
+import { IsString, IsOptional, IsArray, IsEnum, IsNotEmpty, Length, ArrayMaxSize, IsUUID } from "class-validator";
 import { CollaboratorsPostDto } from "../../dto/collaboratorsPost.dto";
 
 export class CreatePostDto {

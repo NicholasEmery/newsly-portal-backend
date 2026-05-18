@@ -1,15 +1,15 @@
 // Importações para o serviço de criação de posts
 // Injectable: Decorator para injeção de dependências
+import { Post } from "@generated/prisma/browser";
+import { User } from "@generated/prisma/client";
+import { Category, PostStatus } from "@generated/prisma/enums";
 import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
 // PrismaService: Acesso ao banco de dados
+import { UploadsService } from "src/common/services/upload/uploads.service";
+import { CreatePostDto } from "./dto/create-post.dto";
 import { PrismaService } from "../../../database/prisma.service";
 // CreatePostDto: DTO para criação
-import { CreatePostDto } from "./dto/create-post.dto";
 // PostStatus: Enum de status
-import { Category, PostStatus } from "@generated/prisma/enums";
-import { UploadsService } from "src/common/services/upload/uploads.service";
-import { User } from "@generated/prisma/client";
-import { Post } from "@generated/prisma/browser";
 import { CollaboratorsPostDto } from "../dto/collaboratorsPost.dto";
 
 // Classe CreatePostsService: Serviço para criação de posts
@@ -44,7 +44,7 @@ export class CreatePostsService {
       permissions: collab.permission,
     }));
 
-    let dataObject = {
+    const dataObject = {
       title: body.title,
       content: body.content,
       imageUrl: imgUpload,

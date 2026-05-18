@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
-import { GetUsersService } from "./get-users.service";
 import { GetUsersController } from "./get-users.controller";
+import { GetUsersService } from "./get-users.service";
 import { PrismaModule } from "../../database/prisma.module";
 
 @Module({

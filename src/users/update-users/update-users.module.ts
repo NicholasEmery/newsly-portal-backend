@@ -1,8 +1,8 @@
 import { Module } from "@nestjs/common";
-import { UpdateUsersService } from "./update-users.service";
 import { UpdateUsersController } from "./update-users.controller";
-import { PrismaModule } from "../../database/prisma.module";
+import { UpdateUsersService } from "./update-users.service";
 import { TokenHelper } from "../../auth/util/generateTokens";
+import { PrismaModule } from "../../database/prisma.module";
 
 @Module({
   imports: [PrismaModule],

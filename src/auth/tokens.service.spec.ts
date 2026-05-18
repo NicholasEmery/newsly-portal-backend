@@ -1,7 +1,7 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { TokensService } from "./tokens.service";
 import { JwtService } from "@nestjs/jwt";
+import { Test, TestingModule } from "@nestjs/testing";
 import { PrismaService } from "src/database/prisma.service";
+import { TokensService } from "./tokens.service";
 import { TokenHelper } from "./util/generateTokens";
 
 // Mock do JwtService

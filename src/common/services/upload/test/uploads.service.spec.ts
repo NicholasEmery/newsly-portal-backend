@@ -1,9 +1,9 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { UploadsService } from "../uploads.service";
 import { InternalServerErrorException, BadRequestException } from "@nestjs/common";
+import { Test, TestingModule } from "@nestjs/testing";
+import axios from "axios";
 import * as fs from "fs";
 import * as path from "path";
-import axios from "axios";
+import { UploadsService } from "../uploads.service";
 
 // Mock do axios
 jest.mock("axios");

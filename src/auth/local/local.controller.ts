@@ -1,8 +1,8 @@
 import { Controller, Post, Body, Get, Query, HttpException, HttpStatus } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { LocalService } from "./local.service";
 import { UserLocalSignInDto } from "./dto/local-signin.dto";
 import { UserLocalSignUpDto } from "./dto/local-signup.dto";
+import { LocalService } from "./local.service";
 import { SessionDto } from "../dto/session.dto";
 
 @ApiTags("Authentication Local")
@@ -60,9 +60,7 @@ export class LocalController {
   }
 
   @Post("password-reset/confirm")
-  async confirmPasswordReset(
-    @Body() body: { token: string; newPassword: string },
-  ): Promise<{ message: string }> {
+  async confirmPasswordReset(@Body() body: { token: string; newPassword: string }): Promise<{ message: string }> {
     try {
       await this.localService.confirmPasswordReset(body.token, body.newPassword);
       return { message: "Senha redefinida com sucesso" };

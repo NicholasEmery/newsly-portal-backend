@@ -1,14 +1,14 @@
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Test, TestingModule } from "@nestjs/testing";
-import { GoogleService } from "../google.service";
+import { Cache } from "cache-manager";
+import { EmailService } from "src/common/services/email/email.service";
 import { PrismaService } from "src/database/prisma.service";
 import { CreateUsersService } from "src/users/create-users/create-users.service";
-import { TokensService } from "../../tokens.service";
-import { EmailService } from "src/common/services/email/email.service";
-import { TokenHelper } from "../../util/generateTokens";
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
-import { Cache } from "cache-manager";
-import { UserGoogleDto } from "../dto/userGoogle.dto";
 import { SessionDto } from "../../dto/session.dto";
+import { TokensService } from "../../tokens.service";
+import { TokenHelper } from "../../util/generateTokens";
+import { UserGoogleDto } from "../dto/userGoogle.dto";
+import { GoogleService } from "../google.service";
 
 // Mocks
 const mockPrismaService = {
@@ -22,6 +22,7 @@ const mockPrismaService = {
   },
   user: {
     findUnique: jest.fn(),
+    update: jest.fn(),
   },
 };
 

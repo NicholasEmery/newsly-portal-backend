@@ -1,23 +1,23 @@
 // Importações para o módulo raiz
 // Module: Decorator para definir módulo
+import { CacheModule } from "@nestjs/cache-manager";
 import { Module } from "@nestjs/common";
 // ConfigModule: Para configuração global (env vars)
 import { ConfigModule } from "@nestjs/config";
 // CacheModule: Para cache com Redis
-import { CacheModule } from "@nestjs/cache-manager";
+import { APP_GUARD } from "@nestjs/core";
 import * as redisStore from "cache-manager-redis-store";
 // AuthModule: Módulo de autenticação
 import { AuthModule } from "./auth/auth.module";
 // UsersModule: Módulo de usuários (removido - agora apenas pasta organizacional)
 // import { UsersModule } from "./users/users.module";
 // PrismaModule: Módulo para Prisma ORM
+import { RolesGuard } from "./common/guards/roles.guard";
+import { SystemModule } from "./common/system/system.module";
 import { PrismaModule } from "./database/prisma.module";
 // APP_GUARD: Para registrar guards globais
-import { APP_GUARD } from "@nestjs/core";
 // RolesGuard: Guard global para verificação de roles
-import { RolesGuard } from "./common/guards/roles.guard";
 // SystemModule: Módulo para health check e readiness
-import { SystemModule } from "./common/system/system.module";
 
 // Classe AppModule: Módulo raiz da aplicação NestJS
 // Define imports globais, controllers e providers

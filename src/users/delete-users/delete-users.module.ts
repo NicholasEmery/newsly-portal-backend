@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
-import { DeleteUsersService } from "./delete-users.service";
 import { DeleteUsersController } from "./delete-users.controller";
+import { DeleteUsersService } from "./delete-users.service";
 import { PrismaModule } from "../../database/prisma.module";
 
 @Module({

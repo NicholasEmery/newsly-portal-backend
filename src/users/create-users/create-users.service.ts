@@ -1,13 +1,13 @@
 // Importações necessárias para o serviço
 // Injectable: Decorator do NestJS para marcar a classe como injetável, permitindo injeção de dependências
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { UserGoogleDto } from "src/auth/google/dto/userGoogle.dto";
-import { SessionDto } from "src/auth/dto/session.dto";
-import { PrismaService } from "src/database/prisma.service";
-import { UploadsService } from "src/common/services/upload/uploads.service";
-import { TokensService } from "../../auth/tokens.service";
 import * as bcrypt from "bcrypt";
+import { SessionDto } from "src/auth/dto/session.dto";
+import { UserGoogleDto } from "src/auth/google/dto/userGoogle.dto";
 import { UserLocalSignUpDto } from "src/auth/local/dto/local-signup.dto";
+import { UploadsService } from "src/common/services/upload/uploads.service";
+import { PrismaService } from "src/database/prisma.service";
+import { TokensService } from "../../auth/tokens.service";
 
 // Classe CreateUsersService: Serviço responsável por criar usuários no sistema
 // Agora delega para UserOperationsService para evitar redundância

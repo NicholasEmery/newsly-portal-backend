@@ -1,8 +1,8 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { AuthGuard } from "../common/guards/auth.guard";
-import { JwtService } from "@nestjs/jwt";
-import { PrismaService } from "src/database/prisma.service";
 import { UnauthorizedException } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { Test, TestingModule } from "@nestjs/testing";
+import { PrismaService } from "src/database/prisma.service";
+import { AuthGuard } from "../common/guards/auth.guard";
 
 // Mock do JwtService
 const mockJwtService = {

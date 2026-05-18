@@ -1,7 +1,7 @@
+import { NotificationType, Role } from "@generated/prisma/enums";
 import { Injectable, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 import { CreateNotificationDto } from "../admin/create-notifications/dto/create-notification.dto";
-import { NotificationType, Role } from "@generated/prisma/enums";
 
 @Injectable()
 export class NotificationsService {
@@ -62,16 +62,22 @@ export class NotificationsService {
     return notification;
   }
 
-  async getNotifications(userId: string, since?: Date) {
+  async getNotifications(userId: string, since?: Date, limit = 20, onlyUnread = false) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const readNotifications = user?.readNotifications ?? [];
+
+    const where: any = {
+      expiresAt: { gt: new Date() },
+      OR: [{ recipientsType: NotificationType.ALL }, { recipients: { has: userId } }],
+    };
+
+    if (since) where.createdAt = { gt: since };
+    if (onlyUnread) where.id = { notIn: readNotifications };
+
     const notifications = await this.prisma.notification.findMany({
-      where: {
-        OR: [
-          { recipientsType: NotificationType.ALL },
-          { recipients: { has: userId } },
-        ],
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 15,
+      where,
+      orderBy: { createdAt: "desc" },
+      take: limit,
     });
 
     return notifications;
@@ -85,30 +91,35 @@ export class NotificationsService {
     if (!notification) {
       throw new ForbiddenException("Notification not found");
     }
-    
-    await this.prisma.user.updateMany({
+
+    await this.prisma.user.update({
       where: { id: userId },
       data: {
-        readNotifications: [notificationId],
-      }
+        readNotifications: { push: notificationId },
+      },
     });
 
     return true;
   }
 
   async getUnreadCount(userId: string) {
-    return this.prisma.notificationUser.count({
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const readNotifications = user?.readNotifications ?? [];
+
+    return this.prisma.notification.count({
       where: {
-        userId,
-        readAt: null,
-        notification: { expiresAt: { gt: new Date() } },
+        expiresAt: { gt: new Date() },
+        AND: [{ id: { notIn: readNotifications } }],
+        OR: [{ recipientsType: NotificationType.ALL }, { recipients: { has: userId } }],
       },
     });
   }
 
   async deleteNotification(userId: string, notificationId: string) {
-    await this.prisma.notificationUser.deleteMany({
-      where: { notificationId, userId },
+    // Mark the notification as read/removed for this user by adding to their readNotifications
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { readNotifications: { push: notificationId } },
     });
   }
 
@@ -126,15 +137,14 @@ export class NotificationsService {
       data: {
         title: "Novo post publicado",
         body: `O post "${post.title}" foi publicado.`,
-        url: `/posts/${postId}`,
+        linkUrl: `/posts/${postId}`,
         recipientsType: NotificationType.USERS,
         recipients,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       },
     });
 
-    await this.prisma.notificationUser.createMany({
-      data: recipients.map((userId) => ({ notificationId: notification.id, userId })),
-    });
+    // No per-user Notification model exists in schema; recipients are stored
+    // on the Notification record itself (field `recipients`).
   }
 }

@@ -1,11 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, ServiceUnavailableException } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 
 @Injectable()
 export class SystemService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async checkHealth() {
+  checkHealth() {
     return {
       status: "ok",
       service: "newsly-api",
@@ -24,11 +24,8 @@ export class SystemService {
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      throw {
-        status: 503,
-        message: "Database connection failed",
-        detail: error instanceof Error ? error.message : "Unknown error",
-      };
+      const message = error instanceof Error ? error.message : "Unknown error";
+      throw new ServiceUnavailableException(`Database connection failed: ${message}`);
     }
   }
 }

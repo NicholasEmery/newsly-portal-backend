@@ -1,6 +1,6 @@
+import { RequestStatus, Role } from "@generated/prisma/enums";
 import { UpdatePostsController } from "./update-posts.controller";
 import { UpdatePostsService } from "./update-posts.service";
-import { RequestStatus, Role } from "@generated/prisma/enums";
 
 describe("UpdatePostsController", () => {
   let controller: UpdatePostsController;

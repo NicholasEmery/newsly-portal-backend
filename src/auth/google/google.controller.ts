@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Req, Body, Query, UseGuards, HttpException, HttpStatus } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { GoogleOauthGuard } from "./guard/google-oauth.guard";
 import { UserGoogleDto } from "./dto/userGoogle.dto";
 import { GoogleService } from "./google.service";
+import { GoogleOauthGuard } from "./guard/google-oauth.guard";
 import { SessionDto } from "../dto/session.dto";
 
 @ApiTags("Authentication Google")

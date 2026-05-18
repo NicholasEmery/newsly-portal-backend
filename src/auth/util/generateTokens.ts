@@ -2,8 +2,7 @@ import * as bcrypt from "bcrypt";
 import * as crypto from "crypto";
 
 export class TokenHelper {
-
-  async generateOpaqueToken(length = 64) {
+  generateOpaqueToken(length = 64) {
     return crypto.randomBytes(length).toString("hex");
   }
 

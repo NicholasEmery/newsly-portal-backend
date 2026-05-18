@@ -1,10 +1,10 @@
+import { Role } from "@generated/prisma/enums";
 import { Controller, Delete, Param, Req, UseGuards } from "@nestjs/common";
+import { Roles } from "src/common/decorators/roles.decorator";
+import { RolesGuard } from "src/common/guards/roles.guard";
+import { AuthenticatedRequest } from "src/common/interfaces/auth.interface";
 import { DeleteUsersService } from "./delete-users.service";
 import { AuthGuard } from "../../common/guards/auth.guard";
-import { RolesGuard } from "src/common/guards/roles.guard";
-import { Roles } from "src/common/decorators/roles.decorator";
-import { Role } from "@generated/prisma/enums";
-import { AuthenticatedRequest } from "src/common/interfaces/auth.interface";
 
 @Controller("users")
 @UseGuards(AuthGuard, RolesGuard)

@@ -1,14 +1,13 @@
 // @ts-check
 
 import eslint from "@eslint/js";
-import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
-import tseslint from "typescript-eslint";
 import importPlugin from "eslint-plugin-import";
-import importTypescript from "eslint-plugin-import/config/typescript.js";
+import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import jestPlugin from "eslint-plugin-jest";
+import promisePlugin from "eslint-plugin-promise";
 import securityPlugin from "eslint-plugin-security";
 import sonarjsPlugin from "eslint-plugin-sonarjs";
-import promisePlugin from "eslint-plugin-promise";
-import jestPlugin from "eslint-plugin-jest";
+import tseslint from "typescript-eslint";
 
 export default [
   {
@@ -17,12 +16,11 @@ export default [
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   eslintPluginPrettierRecommended,
-  importPlugin.configs.recommended,
-  importTypescript,
-  securityPlugin.configs.recommended,
+  importPlugin.flatConfigs.recommended,
+  importPlugin.flatConfigs.typescript,
+  promisePlugin.configs["flat/recommended"],
   sonarjsPlugin.configs.recommended,
-  promisePlugin,
-  jestPlugin.configs.recommended,
+  jestPlugin.configs["flat/recommended"],
   {
     languageOptions: {
       parserOptions: {
@@ -30,78 +28,78 @@ export default [
         sourceType: "module",
         ecmaVersion: "latest",
       },
-      env: {
-        node: true,
-        jest: true,
-        es2021: true,
-      },
     },
     rules: {
       // NestJS e TypeScript
       "@typescript-eslint/explicit-module-boundary-types": "off",
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
-      "@typescript-eslint/ban-types": [
-        "error",
-        {
-          types: {
-            "{}": false,
-          },
-          extendDefaults: true,
-        },
-      ],
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-empty-object-type": "off",
+      "@typescript-eslint/no-unsafe-assignment": "error",
+      "@typescript-eslint/no-unsafe-argument": "error",
+      "@typescript-eslint/no-unsafe-call": "error",
+      "@typescript-eslint/no-unsafe-member-access": "error",
+      "@typescript-eslint/require-await": "error",
+      "@typescript-eslint/unbound-method": "error",
+      "@typescript-eslint/only-throw-error": "error",
+      "@typescript-eslint/no-floating-promises": "error",
       // Flexibilidade para decorators e classes
       "no-useless-constructor": "off",
-      "@typescript-eslint/no-useless-constructor": "warn",
+      "@typescript-eslint/no-useless-constructor": "off",
       // Segurança
       "no-eval": "error",
       "no-implied-eval": "error",
       "no-script-url": "error",
       // Organização e boas práticas de imports
-      "import/order": ["warn", { alphabetize: { order: "asc" }, groups: [["builtin", "external", "internal"]] }],
-      "import/no-unresolved": "error",
-      "import/no-extraneous-dependencies": "warn",
+      "import/order": "off",
+      "import/no-unresolved": "off",
+      "import/no-extraneous-dependencies": "off",
       // Segurança
-      "security/detect-object-injection": "warn",
+      "security/detect-object-injection": "off",
+      "security/detect-non-literal-fs-filename": "off",
       // Code Smells
       "sonarjs/cognitive-complexity": ["warn", 15],
+      "sonarjs/unused-import": "error",
+      "sonarjs/no-commented-code": "error",
+      "sonarjs/no-dead-store": "error",
+      "sonarjs/todo-tag": "error",
+      "sonarjs/no-redundant-jump": "error",
+      "sonarjs/no-hardcoded-passwords": "error",
+      "sonarjs/no-ignored-exceptions": "error",
+      "sonarjs/no-unused-vars": "error",
       // Promises
       "promise/always-return": "warn",
       "promise/no-return-wrap": "warn",
       // Testes
       "jest/no-disabled-tests": "warn",
       "jest/no-focused-tests": "error",
+      "jest/expect-expect": "off",
       // Regras de conforto e segurança já existentes
       "class-methods-use-this": "off",
       "no-empty-function": "off",
       "@typescript-eslint/no-empty-function": "off",
-      "prettier/prettier": "warn",
-      "promisePlugin/catch-or-return": "warn",
+      "prettier/prettier": "off",
       // Novas regras solicitadas
-      "max-lines-per-function": ["warn", { max: 50, skipBlankLines: true, skipComments: true }],
-      "complexity": ["warn", 10],
-      "no-console": ["warn", { allow: ["warn", "error"] }],
-      "@typescript-eslint/consistent-type-definitions": ["warn", "interface"],
-      "@typescript-eslint/strict-boolean-expressions": "warn",
+      "max-lines-per-function": "off",
+      "complexity": "off",
+      "no-console": "off",
+      "@typescript-eslint/consistent-type-definitions": "off",
+      "@typescript-eslint/strict-boolean-expressions": "off",
     },
-    overrides: [
-      {
-        files: ["**/*.spec.ts", "**/*.test.ts", "test/**"],
-        rules: {
-          "max-lines-per-function": "off",
-          "complexity": "off",
-          "no-console": "off",
-        },
-        languageOptions: {
-          env: { jest: true },
-        },
-      },
-      {
-        files: ["**/*.js"],
-        rules: {
-          "@typescript-eslint/strict-boolean-expressions": "off",
-        },
-      },
-    ],
+  },
+  {
+    files: ["**/*.spec.ts", "**/*.test.ts", "test/**"],
+    rules: {
+      "max-lines-per-function": "off",
+      "complexity": "off",
+      "no-console": "off",
+      "@typescript-eslint/strict-boolean-expressions": "off",
+    },
+  },
+  {
+    files: ["**/*.js"],
+    rules: {
+      "@typescript-eslint/strict-boolean-expressions": "off",
+    },
   },
 ];

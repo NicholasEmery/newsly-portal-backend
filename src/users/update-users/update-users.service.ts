@@ -2,13 +2,13 @@
 // Injectable: Decorator para injeção
 import { Injectable } from "@nestjs/common";
 // PrismaService: Acesso ao banco
-import { PrismaService } from "../../database/prisma.service";
 // SafeUser: Tipo seguro para retorno
 // import { SafeUser, UserOperationsService } from "../user-operations.service";
 // Role: Enum de papéis
 import { Role } from "../../../generated/prisma/enums";
 // TokenHelper: Para hashear senhas
 import { TokenHelper } from "../../auth/util/generateTokens";
+import { PrismaService } from "../../database/prisma.service";
 
 // Interface UpdateUserInput: Dados para atualizar usuário
 // Exemplo: { id: '123', name: 'Novo Nome', role: Role.ADMIN }

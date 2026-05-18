@@ -1,9 +1,9 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { CreatePostsService } from "./create-posts.service";
-import { PrismaService } from "../../../database/prisma.service";
-import { UploadsService } from "src/common/services/upload/uploads.service";
-import { CreatePostDto } from "./dto/create-post.dto";
 import { Category, PostStatus, Role } from "@generated/prisma/enums";
+import { Test, TestingModule } from "@nestjs/testing";
+import { UploadsService } from "src/common/services/upload/uploads.service";
+import { CreatePostsService } from "./create-posts.service";
+import { CreatePostDto } from "./dto/create-post.dto";
+import { PrismaService } from "../../../database/prisma.service";
 
 describe("CreatePostsService", () => {
   let service: CreatePostsService;

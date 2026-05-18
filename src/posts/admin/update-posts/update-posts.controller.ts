@@ -1,21 +1,21 @@
 // Importações para o controller de edição de posts
 // Controller: Decorator para controlador
+import { Role } from "@generated/prisma/enums";
 import { Controller, Put, Body, UseGuards, Request, Param, Patch, Post, HttpCode, Query } from "@nestjs/common";
 // AuthGuard: Guarda de autenticação
+import { AuthenticatedRequest } from "src/common/interfaces/auth.interface";
+import { RequestEditDto } from "./dto/request-edit.dto";
+import { UpdateCreationStatusDto } from "./dto/update-creation-status.dto";
+import { UpdatePostDto } from "./dto/update-post.dto";
+import { UpdatePostsService } from "./update-posts.service";
+import { Roles } from "../../../common/decorators/roles.decorator";
 import { AuthGuard } from "../../../common/guards/auth.guard";
 // RolesGuard: Guarda de roles
 import { RolesGuard } from "../../../common/guards/roles.guard";
 // Roles: Decorator para roles
-import { Roles } from "../../../common/decorators/roles.decorator";
 // UpdatePostDto: DTO para edição
-import { UpdatePostDto } from "./dto/update-post.dto";
 // UpdatePostsService: Serviço de edição
-import { UpdatePostsService } from "./update-posts.service";
 // Role: Enum de roles
-import { Role } from "@generated/prisma/enums";
-import { AuthenticatedRequest } from "src/common/interfaces/auth.interface";
-import { UpdateCreationStatusDto } from "./dto/update-creation-status.dto";
-import { RequestEditDto } from "./dto/request-edit.dto";
 
 // Classe UpdatePostsController: Controlador para edição de posts
 // Rotas: PUT /posts/:id (editar diretamente), POST /posts/:id/request-edit (solicitar edição), PATCH /posts/editing/:id/approve (aprovar), PATCH /posts/editing/:id/reject (rejeitar)

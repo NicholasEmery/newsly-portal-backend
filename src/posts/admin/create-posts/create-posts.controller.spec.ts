@@ -1,6 +1,6 @@
+import { Role } from "@generated/prisma/enums";
 import { CreatePostsController } from "./create-posts.controller";
 import { CreatePostsService } from "./create-posts.service";
-import { Role } from "@generated/prisma/enums";
 
 describe("CreatePostsController", () => {
   let controller: CreatePostsController;

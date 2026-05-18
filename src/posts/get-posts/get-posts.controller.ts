@@ -6,7 +6,6 @@ export class GetPostsController {
   constructor(private getPostsService: GetPostsService) {}
 
   @Get("")
-
   @Get("latest")
   async getLatest(@Query("page") page = 1, @Query("limit") limit = 20) {
     return this.getPostsService.getLatestPosts(+page, +limit);

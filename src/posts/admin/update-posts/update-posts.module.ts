@@ -1,12 +1,12 @@
 // Importações para o módulo de edição de posts
 // Module: Decorator para módulo
-import { Module } from '@nestjs/common';
+import { Module } from "@nestjs/common";
 // UpdatePostsController: Controlador
-import { UpdatePostsController } from './update-posts.controller';
+import { UpdatePostsController } from "./update-posts.controller";
 // UpdatePostsService: Serviço
-import { UpdatePostsService } from './update-posts.service';
+import { UpdatePostsService } from "./update-posts.service";
 // PrismaModule: Módulo do banco
-import { PrismaModule } from '../../../database/prisma.module';
+import { PrismaModule } from "../../../database/prisma.module";
 
 // Classe UpdatePostsModule: Módulo para edição de posts
 // Providers: UpdatePostsService

@@ -1,19 +1,19 @@
 // Importações para o controller de criação de posts
 // Controller: Decorator para controlador
+import { Role } from "@generated/prisma/enums";
 import { Controller, Post, Body, UseGuards, Request, Param, Patch, Req, HttpCode } from "@nestjs/common";
 // AuthGuard: Guarda de autenticação
+import { AuthenticatedRequest } from "src/common/interfaces/auth.interface";
+import { CreatePostsService } from "./create-posts.service";
+import { CreatePostDto } from "./dto/create-post.dto";
+import { Roles } from "../../../common/decorators/roles.decorator";
 import { AuthGuard } from "../../../common/guards/auth.guard";
 // RolesGuard: Guarda de roles
 import { RolesGuard } from "../../../common/guards/roles.guard";
 // Roles: Decorator para roles
-import { Roles } from "../../../common/decorators/roles.decorator";
 // CreatePostDto: DTO para criação
-import { CreatePostDto } from "./dto/create-post.dto";
 // CreatePostsService: Serviço de criação
-import { CreatePostsService } from "./create-posts.service";
 // Role: Enum de roles
-import { Role } from "@generated/prisma/enums";
-import { AuthenticatedRequest } from "src/common/interfaces/auth.interface";
 // Classe CreatePostsController: Controlador para criação de posts
 // Rotas: POST /posts (criar), PATCH /posts/creation/:id/approve (aprovar), PATCH /posts/creation/:id/reject (rejeitar)
 // Caso de uso: Usuários criando posts, admins aprovando/rejeitando

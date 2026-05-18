@@ -1,12 +1,12 @@
-import { Injectable, Inject, BadRequestException, NotFoundException } from "@nestjs/common";
-import { UserGoogleDto } from "./dto/userGoogle.dto";
-import { PrismaService } from "src/database/prisma.service";
-import { CreateUsersService } from "src/users/create-users/create-users.service";
-import { SessionDto } from "../dto/session.dto";
-import { TokensService } from "../tokens.service";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Injectable, Inject, BadRequestException, NotFoundException } from "@nestjs/common";
 import { Cache } from "cache-manager";
 import { EmailService } from "src/common/services/email/email.service";
+import { PrismaService } from "src/database/prisma.service";
+import { CreateUsersService } from "src/users/create-users/create-users.service";
+import { UserGoogleDto } from "./dto/userGoogle.dto";
+import { SessionDto } from "../dto/session.dto";
+import { TokensService } from "../tokens.service";
 import { TokenHelper } from "../util/generateTokens";
 
 @Injectable()

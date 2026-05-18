@@ -1,11 +1,11 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { CreateUsersService } from "../create-users.service";
-import { PrismaService } from "src/database/prisma.service";
 import { UploadsService } from "src/common/services/upload/uploads.service";
-import { TokensService } from "../../../auth/tokens.service";
+import { PrismaService } from "src/database/prisma.service";
+import { SessionDto } from "../../../auth/dto/session.dto";
 import { UserGoogleDto } from "../../../auth/google/dto/userGoogle.dto";
 import { UserLocalSignUpDto } from "../../../auth/local/dto/local-signup.dto";
-import { SessionDto } from "../../../auth/dto/session.dto";
+import { TokensService } from "../../../auth/tokens.service";
+import { CreateUsersService } from "../create-users.service";
 
 // Mocks
 const mockPrismaService = {

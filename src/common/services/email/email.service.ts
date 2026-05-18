@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import * as nodemailer from "nodemailer";
-import * as handlebars from "handlebars";
 import * as fs from "fs";
+import * as handlebars from "handlebars";
+import * as nodemailer from "nodemailer";
 import * as path from "path";
 
 @Injectable()

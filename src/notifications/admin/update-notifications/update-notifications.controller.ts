@@ -1,8 +1,8 @@
 import { Controller, Post, Param, UseGuards } from "@nestjs/common";
+import { UpdateNotificationsService } from "./update-notifications.service";
+import { Roles } from "../../../common/decorators/roles.decorator";
 import { AuthGuard } from "../../../common/guards/auth.guard";
 import { RolesGuard } from "../../../common/guards/roles.guard";
-import { Roles } from "../../../common/decorators/roles.decorator";
-import { UpdateNotificationsService } from "./update-notifications.service";
 
 @Controller("notifications")
 @UseGuards(AuthGuard, RolesGuard)

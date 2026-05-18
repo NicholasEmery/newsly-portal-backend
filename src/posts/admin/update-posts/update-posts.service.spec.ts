@@ -1,8 +1,8 @@
+import { PostStatus, RequestStatus, Role } from "@generated/prisma/enums";
 import { Test, TestingModule } from "@nestjs/testing";
+import { UpdatePostDto } from "./dto/update-post.dto";
 import { UpdatePostsService } from "./update-posts.service";
 import { PrismaService } from "../../../database/prisma.service";
-import { UpdatePostDto } from "./dto/update-post.dto";
-import { PostStatus, RequestStatus, Role } from "@generated/prisma/enums";
 
 describe("UpdatePostsService", () => {
   let service: UpdatePostsService;

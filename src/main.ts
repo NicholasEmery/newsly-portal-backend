@@ -2,15 +2,15 @@
 // dotenv/config: Carrega variáveis de ambiente do .env
 import "dotenv/config";
 // NestFactory: Fábrica para criar app NestJS
-import { NestFactory } from "@nestjs/core";
 // AppModule: Módulo raiz da aplicação
-import { AppModule } from "./app.module";
 // ValidationPipe: Pipe global para validação de DTOs
 import { ValidationPipe } from "@nestjs/common";
 // ConfigService: Serviço para acessar config/env
 import { ConfigService } from "@nestjs/config";
+import { NestFactory } from "@nestjs/core";
 // Swagger: Para documentação da API
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { AppModule } from "./app.module";
 
 // Função bootstrap:Inicializa e configura a aplicação NestJS
 // Lógica: Cria app, configura validação, Swagger, e inicia servidor

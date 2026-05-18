@@ -1,6 +1,6 @@
+import { Category, PostStatus, Tag } from "@generated/prisma/enums";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/database/prisma.service";
-import { Category, PostStatus, Tag } from "@generated/prisma/enums";
 
 @Injectable()
 export class GetPostsService {

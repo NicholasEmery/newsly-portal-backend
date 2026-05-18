@@ -1,12 +1,12 @@
+import { CacheModule } from "@nestjs/cache-manager";
 import { Module } from "@nestjs/common";
-import { GoogleStrategy } from "./strategy/google.strategy";
-import { GoogleOauthGuard } from "./guard/google-oauth.guard";
-import { GoogleService } from "./google.service";
+import { EmailService } from "src/common/services/email/email.service";
 import { GoogleController } from "./google.controller";
+import { GoogleService } from "./google.service";
+import { GoogleOauthGuard } from "./guard/google-oauth.guard";
+import { GoogleStrategy } from "./strategy/google.strategy";
 import { PrismaModule } from "../../database/prisma.module";
 import { CreateUsersModule } from "../../users/create-users/create-users.module";
-import { CacheModule } from "@nestjs/cache-manager";
-import { EmailService } from "src/common/services/email/email.service";
 import { TokenHelper } from "../util/generateTokens";
 
 @Module({

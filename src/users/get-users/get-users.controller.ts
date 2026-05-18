@@ -1,10 +1,10 @@
 // Importações para o controller
 // Controller, Get, Param, Query: Decorators para rotas GET
+import { Role } from "@generated/prisma/enums";
 import { Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
 // GetUsersService: Serviço para lógica de leitura
-import { GetUsersService } from "./get-users.service";
 import { AuthGuard } from "src/common/guards/auth.guard";
-import { Role } from "@generated/prisma/enums";
+import { GetUsersService } from "./get-users.service";
 
 // Classe GetUsersController: Controla rotas para leitura de usuários
 // Prefixo '/users'
@@ -31,6 +31,4 @@ export class GetUsersController {
   async findByEmail(@Param("email") email: string) {
     return this.getUsersService.findByEmail(email);
   }
-
-  
 }

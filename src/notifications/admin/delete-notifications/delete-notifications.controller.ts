@@ -1,8 +1,8 @@
 import { Controller, Delete, Param, UseGuards } from "@nestjs/common";
+import { DeleteNotificationsService } from "./delete-notifications.service";
+import { Roles } from "../../../common/decorators/roles.decorator";
 import { AuthGuard } from "../../../common/guards/auth.guard";
 import { RolesGuard } from "../../../common/guards/roles.guard";
-import { Roles } from "../../../common/decorators/roles.decorator";
-import { DeleteNotificationsService } from "./delete-notifications.service";
 
 @Controller("notifications")
 @UseGuards(AuthGuard, RolesGuard)
