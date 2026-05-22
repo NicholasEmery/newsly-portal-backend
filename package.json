@@ -42,7 +42,7 @@
     "libsodium-wrappers": "^0.7.16",
     "mime-types": "^3.0.2",
     "multer": "^2.0.2",
-    "nodemailer": "^7.0.12",
+    "nodemailer": "^8.0.5",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
