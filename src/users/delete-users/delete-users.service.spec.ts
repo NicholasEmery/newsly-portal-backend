@@ -15,7 +15,19 @@ describe("DeleteUsersService", () => {
   });
 
   it("should delete a user", async () => {
-    jest.spyOn(prisma.user, "delete").mockResolvedValue({} as any);
+    jest.spyOn(prisma.user, "delete").mockResolvedValue({
+      id: "1",
+      name: "Test",
+      email: "test@example.com",
+      role: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      photo: "",
+      emailVerified: false,
+      createQuota: null,
+      createQuotaExpiresAt: null,
+      readNotifications: [],
+    } as unknown);
     await expect(service.deleteUser("1")).resolves.toBeUndefined();
   });
 });

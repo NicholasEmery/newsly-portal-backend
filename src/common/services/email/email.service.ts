@@ -22,14 +22,15 @@ export class EmailService {
     });
   }
 
-  async sendEmail(to: string, subject: string, templateName: string, data: Record<string, any>): Promise<void> {
+  async sendEmail(to: string, subject: string, templateName: string, data: Record<string, unknown>): Promise<void> {
     const templatePath = path.join(__dirname, "templates", `${templateName}.hbs`);
 
     let templateSource: string;
     try {
       templateSource = fs.readFileSync(templatePath, "utf-8");
-    } catch (error) {
-      throw new NotFoundException(`Template "${templateName}" not found at path: ${templatePath}`);
+    } catch (error: unknown) {
+      const reason = error instanceof Error ? ` (${error.message})` : "";
+      throw new NotFoundException(`Template "${templateName}" not found at path: ${templatePath}${reason}`);
     }
 
     if (!templateSource) {

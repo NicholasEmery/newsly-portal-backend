@@ -1,7 +1,6 @@
 // Importações para o controller
 // Controller, Get, Param, Query: Decorators para rotas GET
-import { Role } from "@generated/prisma/enums";
-import { Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Param, UseGuards } from "@nestjs/common";
 // GetUsersService: Serviço para lógica de leitura
 import { AuthGuard } from "src/common/guards/auth.guard";
 import { GetUsersService } from "./get-users.service";
@@ -20,7 +19,7 @@ export class GetUsersController {
   // Caso de uso: Perfil de usuário
   @Get(":id")
   @UseGuards(AuthGuard)
-  async findById(@Param("id") id: string) {
+  findById(@Param("id") id: string) {
     return this.getUsersService.findById(id);
   }
 
@@ -28,7 +27,7 @@ export class GetUsersController {
   // Exemplo: GET /users/email/user@example.com
   // Caso de uso: Verificação de email existente
   @Get("email/:email")
-  async findByEmail(@Param("email") email: string) {
+  findByEmail(@Param("email") email: string) {
     return this.getUsersService.findByEmail(email);
   }
 }

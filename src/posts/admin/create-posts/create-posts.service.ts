@@ -1,9 +1,8 @@
 // Importações para o serviço de criação de posts
 // Injectable: Decorator para injeção de dependências
 import { Post } from "@generated/prisma/browser";
-import { User } from "@generated/prisma/client";
 import { Category, PostStatus } from "@generated/prisma/enums";
-import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 // PrismaService: Acesso ao banco de dados
 import { UploadsService } from "src/common/services/upload/uploads.service";
 import { CreatePostDto } from "./dto/create-post.dto";

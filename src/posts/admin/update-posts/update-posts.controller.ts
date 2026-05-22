@@ -1,7 +1,7 @@
 // Importações para o controller de edição de posts
 // Controller: Decorator para controlador
 import { Role } from "@generated/prisma/enums";
-import { Controller, Put, Body, UseGuards, Request, Param, Patch, Post, HttpCode, Query } from "@nestjs/common";
+import { Controller, Put, Body, UseGuards, Request, Param, Patch, HttpCode, Query } from "@nestjs/common";
 // AuthGuard: Guarda de autenticação
 import { AuthenticatedRequest } from "src/common/interfaces/auth.interface";
 import { RequestEditDto } from "./dto/request-edit.dto";
@@ -48,7 +48,11 @@ export class UpdatePostsController {
   // Exemplo: PATCH /posts/editing/req1/approve
   @Patch("editing/:id/approve")
   @UseGuards(AuthGuard)
-  async approveEdit(@Request() req: any, @Param("id") requestId: string, @Body() body: { reason?: string }) {
+  async approveEdit(
+    @Request() req: AuthenticatedRequest,
+    @Param("id") requestId: string,
+    @Body() body: { reason?: string },
+  ) {
     return this.updatePostsService.approveEdit(req.user.id, req.user.role, requestId, body.reason);
   }
 
@@ -58,7 +62,11 @@ export class UpdatePostsController {
   // Exemplo: PATCH /posts/editing/req1/reject
   @Patch("editing/:id/reject")
   @UseGuards(AuthGuard)
-  async rejectEdit(@Request() req: any, @Param("id") requestId: string, @Body() body: { reason?: string }) {
+  async rejectEdit(
+    @Request() req: AuthenticatedRequest,
+    @Param("id") requestId: string,
+    @Body() body: { reason?: string },
+  ) {
     return this.updatePostsService.rejectEdit(req.user.id, requestId, body.reason);
   }
 
@@ -71,7 +79,7 @@ export class UpdatePostsController {
   @Roles(Role.ADMIN)
   async updateCreationStatus(
     @Request() req: AuthenticatedRequest,
-    @Param("id") requestId: UpdateCreationStatusDto["id"],
+    @Param("id") requestId: string,
     @Query("status") status: UpdateCreationStatusDto["status"],
   ) {
     const adminId = req.user.id;

@@ -18,7 +18,6 @@ const mockTokenHelper = {
 
 describe("UpdateUsersService", () => {
   let service: UpdateUsersService;
-  let prisma: PrismaService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -35,14 +34,13 @@ describe("UpdateUsersService", () => {
       ],
     }).compile();
     service = module.get<UpdateUsersService>(UpdateUsersService);
-    prisma = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
   });
 
   it("should update a user", async () => {
     const mockUser = { id: "1", email: "updated@example.com", name: "Updated", role: "publisher" };
-    mockPrismaService.user.update.mockResolvedValue(mockUser as any);
+    mockPrismaService.user.update.mockResolvedValue(mockUser as unknown);
 
     const result = await service.updateUser({ id: "1", email: "updated@example.com" });
 

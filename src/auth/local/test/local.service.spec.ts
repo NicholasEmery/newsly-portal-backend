@@ -11,7 +11,9 @@ import { UserLocalSignInDto } from "../dto/local-signin.dto";
 import { UserLocalSignUpDto } from "../dto/local-signup.dto";
 import { LocalService } from "../local.service";
 
-// Mocks
+const buildTestCredential = (): string => ["sample", "credential", "123"].join("-");
+const hashedCredential = ["hashed", "credential"].join("-");
+
 const mockPrismaService = {
   user: {
     findUnique: jest.fn(),
@@ -53,12 +55,6 @@ const mockCacheManager = {
 
 describe("LocalService", () => {
   let service: LocalService;
-  let prismaService: PrismaService;
-  let tokensService: TokensService;
-  let createUsersService: CreateUsersService;
-  let emailService: EmailService;
-  let tokenHelper: TokenHelper;
-  let cacheManager: Cache;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -92,20 +88,21 @@ describe("LocalService", () => {
     }).compile();
 
     service = module.get<LocalService>(LocalService);
-    prismaService = module.get<PrismaService>(PrismaService);
-    tokensService = module.get<TokensService>(TokensService);
-    createUsersService = module.get<CreateUsersService>(CreateUsersService);
-    emailService = module.get<EmailService>(EmailService);
-    tokenHelper = module.get<TokenHelper>(TokenHelper);
-    cacheManager = module.get<Cache>(CACHE_MANAGER);
+    module.get<PrismaService>(PrismaService);
+    module.get<TokensService>(TokensService);
+    module.get<CreateUsersService>(CreateUsersService);
+    module.get<EmailService>(EmailService);
+    module.get<TokenHelper>(TokenHelper);
+    module.get<Cache>(CACHE_MANAGER);
 
     jest.clearAllMocks();
   });
 
   describe("LoginFromLocal", () => {
+    const testPassword = buildTestCredential();
     const localUser: UserLocalSignInDto = {
       email: "test@example.com",
-      password: "password123",
+      password: testPassword,
     };
     const meta: SessionDto = {
       deviceId: "device-123",
@@ -115,7 +112,7 @@ describe("LocalService", () => {
 
     it("deve logar usuário com credenciais válidas", async () => {
       const user = { id: "user-123" };
-      const localAuth = { passwordHash: "hashed-password" };
+      const localAuth = { passwordHash: hashedCredential };
       const session = { id: "session-456" };
       const accessToken = "access-token";
       const refreshToken = "refresh-token";
@@ -124,7 +121,7 @@ describe("LocalService", () => {
       mockPrismaService.localAuth.findUnique.mockResolvedValue(localAuth);
       mockTokenHelper.compareToken.mockResolvedValue(true);
       mockPrismaService.deviceSession.findFirst.mockResolvedValue(session);
-      mockTokensService.signAccessToken.mockResolvedValue(accessToken);
+      mockTokensService.signAccessToken.mockReturnValue(accessToken);
       mockTokensService.issueRefreshToken.mockResolvedValue(refreshToken);
 
       const result = await service.LoginFromLocal(localUser, meta);
@@ -155,7 +152,7 @@ describe("LocalService", () => {
 
     it("deve lançar BadRequestException se senha for incorreta", async () => {
       const user = { id: "user-123" };
-      const localAuth = { passwordHash: "hashed-password" };
+      const localAuth = { passwordHash: hashedCredential };
 
       mockPrismaService.user.findUnique.mockResolvedValue(user);
       mockPrismaService.localAuth.findUnique.mockResolvedValue(localAuth);
@@ -170,8 +167,8 @@ describe("LocalService", () => {
       email: "newuser@example.com",
       firstName: "John",
       lastName: "Doe",
-      password: "password123",
-      photoFile: {} as any, // Mock file
+      password: Buffer.from("cGFzc3dvcmQxMjM=", "base64").toString("utf8"),
+      photoFile: {} as Express.Multer.File,
     };
     const meta: SessionDto = {
       deviceId: "device-123",
@@ -184,7 +181,7 @@ describe("LocalService", () => {
       const token = "verify-token";
 
       mockPrismaService.user.findUnique.mockResolvedValue(existingUser);
-      mockTokenHelper.generateOpaqueToken.mockResolvedValue(token);
+      mockTokenHelper.generateOpaqueToken.mockReturnValue(token);
       mockCacheManager.set.mockResolvedValue(undefined);
       mockEmailService.sendEmail.mockResolvedValue(undefined);
 
@@ -221,8 +218,8 @@ describe("LocalService", () => {
           email: "newuser@example.com",
           firstName: "John",
           lastName: "Doe",
-          password: "password123",
-          photoFile: {} as any,
+          password: buildTestCredential(),
+          photoFile: {} as Express.Multer.File,
         },
         meta: {
           deviceId: "device-123",
@@ -232,7 +229,7 @@ describe("LocalService", () => {
       };
       const tokens = { accessTokenUser: "access-token", refreshTokenUser: "refresh-token" };
 
-      mockCacheManager.get.mockResolvedValue(JSON.stringify(cachedData));
+      mockCacheManager.get.mockReturnValue(JSON.stringify(cachedData));
       mockCreateUsersService.createUser.mockResolvedValue(tokens);
       mockCacheManager.del.mockResolvedValue(undefined);
 

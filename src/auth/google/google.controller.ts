@@ -5,6 +5,10 @@ import { GoogleService } from "./google.service";
 import { GoogleOauthGuard } from "./guard/google-oauth.guard";
 import { SessionDto } from "../dto/session.dto";
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Erro inesperado";
+}
+
 @ApiTags("Authentication Google")
 @Controller("auth/google")
 export class GoogleController {
@@ -33,8 +37,8 @@ export class GoogleController {
 
     try {
       return await this.googleService.validateLoginOrCreateUserFromGoogle(user, meta);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    } catch (error: unknown) {
+      throw new HttpException(getErrorMessage(error), HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -46,9 +50,9 @@ export class GoogleController {
   ): Promise<{ message: string }> {
     const { email, provider, meta } = body;
     try {
-      return this.googleService.linkGoogleToUser(email, provider, meta);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      return await this.googleService.linkGoogleToUser(email, provider, meta);
+    } catch (error: unknown) {
+      throw new HttpException(getErrorMessage(error), HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -59,9 +63,9 @@ export class GoogleController {
     @Query("token") token: string,
   ): Promise<{ message: string; accessToken: string; refreshToken: string }> {
     try {
-      return this.googleService.confirmGoogleLink(token);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      return await this.googleService.confirmGoogleLink(token);
+    } catch (error: unknown) {
+      throw new HttpException(getErrorMessage(error), HttpStatus.BAD_REQUEST);
     }
   }
 }

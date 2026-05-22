@@ -1,11 +1,74 @@
 import { PostStatus, RequestStatus, Role } from "@generated/prisma/enums";
 import { Test, TestingModule } from "@nestjs/testing";
+import { PrismaService } from "../../../database/prisma.service";
 import { UpdatePostDto } from "./dto/update-post.dto";
 import { UpdatePostsService } from "./update-posts.service";
-import { PrismaService } from "../../../database/prisma.service";
+
+type MockPostRecord = {
+  id: string;
+  creatorId?: string;
+  collaborators?: Array<{
+    userId: string;
+    permissions: string[];
+  }>;
+};
+
+type MockEditRequestRecord = {
+  id: string;
+  postId: string;
+  targetRole?: Role;
+  proposedChanges?: {
+    title?: string;
+    image?: string;
+    content?: string;
+    categories?: unknown;
+  };
+  requester?: {
+    role: Role;
+  };
+  post?: {
+    creatorId: string;
+  };
+  status?: RequestStatus;
+};
+
+type MockCreationRequestRecord = {
+  id: string;
+  postId: string;
+  post?: {
+    id: string;
+  };
+};
 
 describe("UpdatePostsService", () => {
   let service: UpdatePostsService;
+
+  type EditRequestCreateArgs = {
+    data: {
+      postId: string;
+      requesterId: string;
+      targetRole: Role;
+      proposedChanges: UpdatePostDto;
+      status: RequestStatus;
+    };
+  };
+
+  type PostUpdateArgs = {
+    where: { id: string };
+    data: {
+      status: PostStatus;
+      publishedAt: Date;
+    };
+  };
+
+  type CreationUpdateArgs = {
+    where: { id: string };
+    data: {
+      status: RequestStatus;
+      adminReviewerId: string;
+      reviewedAt: Date;
+    };
+  };
 
   const mockPrismaService = {
     post: {
@@ -43,9 +106,9 @@ describe("UpdatePostsService", () => {
 
   it("updates a post directly for admins", async () => {
     const body: UpdatePostDto = { title: "Updated title" };
-    const updatedPost = { id: "post-1", title: "Updated title" };
+    const updatedPost: MockPostRecord = { id: "post-1", creatorId: "admin-1" };
 
-    mockPrismaService.post.update.mockResolvedValue(updatedPost as any);
+    mockPrismaService.post.update.mockResolvedValue(updatedPost);
 
     const result = await service.updatePost("admin-1", "post-1", body, Role.ADMIN);
 
@@ -58,32 +121,34 @@ describe("UpdatePostsService", () => {
 
   it("creates an edit request for creators", async () => {
     const body: UpdatePostDto = { title: "Updated title" };
-
-    mockPrismaService.post.findUnique.mockResolvedValue({
+    const existingPost: MockPostRecord = {
       id: "post-1",
       creatorId: "user-1",
       collaborators: [],
-    } as any);
-    mockPrismaService.editRequest.create.mockResolvedValue({ id: "request-1" } as any);
+    };
+    const editRequest: MockEditRequestRecord = { id: "request-1", postId: "post-1" };
+
+    mockPrismaService.post.findUnique.mockResolvedValue(existingPost);
+    mockPrismaService.editRequest.create.mockResolvedValue(editRequest);
 
     const result = await service.updatePost("user-1", "post-1", body, Role.CREATOR);
 
-    expect(mockPrismaService.editRequest.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          postId: "post-1",
-          requesterId: "user-1",
-          targetRole: Role.ADMIN,
-          proposedChanges: body,
-          status: RequestStatus.PENDING,
-        }),
-      }),
-    );
-    expect(result).toEqual({ id: "request-1" });
+    const [[editRequestArgs]] = mockPrismaService.editRequest.create.mock.calls as unknown as [[EditRequestCreateArgs]];
+
+    expect(editRequestArgs).toMatchObject({
+      data: {
+        postId: "post-1",
+        requesterId: "user-1",
+        targetRole: Role.ADMIN,
+        proposedChanges: body,
+        status: RequestStatus.PENDING,
+      },
+    });
+    expect(result).toMatchObject({ id: "request-1", postId: "post-1" });
   });
 
   it("approves edit requests for admins", async () => {
-    mockPrismaService.editRequest.findUnique.mockResolvedValue({
+    const pendingRequest: MockEditRequestRecord = {
       id: "request-1",
       postId: "post-1",
       targetRole: Role.ADMIN,
@@ -91,42 +156,59 @@ describe("UpdatePostsService", () => {
       requester: { role: Role.CREATOR },
       post: { creatorId: "someone-else" },
       status: RequestStatus.PENDING,
-    } as any);
-    mockPrismaService.post.update.mockResolvedValue({ id: "post-1" } as any);
-    mockPrismaService.editRequest.update.mockResolvedValue({ id: "request-1" } as any);
+    };
+    const updatedPost: MockPostRecord = { id: "post-1" };
+    const updatedRequest: MockEditRequestRecord = { id: "request-1", postId: "post-1" };
+
+    mockPrismaService.editRequest.findUnique.mockResolvedValue(pendingRequest);
+    mockPrismaService.post.update.mockResolvedValue(updatedPost);
+    mockPrismaService.editRequest.update.mockResolvedValue(updatedRequest);
 
     const result = await service.approveEdit("admin-1", Role.ADMIN, "request-1", "ok");
 
     expect(mockPrismaService.post.update).toHaveBeenCalled();
-    expect(result).toEqual({ id: "request-1" });
+    expect(result).toMatchObject({ id: "request-1", postId: "post-1" });
   });
 
   it("publishes creation requests when approved", async () => {
-    mockPrismaService.creationRequest.findUnique.mockResolvedValue({
+    const creationRequest: MockCreationRequestRecord = {
       id: "request-1",
       postId: "post-1",
       post: { id: "post-1" },
-    } as any);
-    mockPrismaService.post.update.mockResolvedValue({ id: "post-1" } as any);
-    mockPrismaService.creationRequest.update.mockResolvedValue({ id: "request-1" } as any);
+    };
+    const updatedPost: MockPostRecord = { id: "post-1" };
+    const updatedRequest: MockCreationRequestRecord = {
+      id: "request-1",
+      postId: "post-1",
+      post: { id: "post-1" },
+    };
+
+    mockPrismaService.creationRequest.findUnique.mockResolvedValue(creationRequest);
+    mockPrismaService.post.update.mockResolvedValue(updatedPost);
+    mockPrismaService.creationRequest.update.mockResolvedValue(updatedRequest);
 
     const result = await service.updateCreationStatus("admin-1", "request-1", RequestStatus.APPROVED);
 
-    expect(mockPrismaService.post.update).toHaveBeenCalledWith({
+    const [[postUpdateArgs]] = mockPrismaService.post.update.mock.calls as unknown as [[PostUpdateArgs]];
+    const [[creationUpdateArgs]] = mockPrismaService.creationRequest.update.mock.calls as unknown as [
+      [CreationUpdateArgs],
+    ];
+
+    expect(postUpdateArgs).toMatchObject({
       where: { id: "post-1" },
       data: {
         status: PostStatus.PUBLISHED,
-        publishedAt: expect.any(Date),
       },
     });
-    expect(mockPrismaService.creationRequest.update).toHaveBeenCalledWith({
+    expect(postUpdateArgs.data.publishedAt).toBeInstanceOf(Date);
+    expect(creationUpdateArgs).toMatchObject({
       where: { id: "request-1" },
       data: {
         status: RequestStatus.APPROVED,
         adminReviewerId: "admin-1",
-        reviewedAt: expect.any(Date),
       },
     });
+    expect(creationUpdateArgs.data.reviewedAt).toBeInstanceOf(Date);
     expect(result).toBeUndefined();
   });
 });

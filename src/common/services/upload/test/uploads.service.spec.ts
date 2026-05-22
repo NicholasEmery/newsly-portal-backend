@@ -1,4 +1,3 @@
-import { InternalServerErrorException, BadRequestException } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import axios from "axios";
 import * as fs from "fs";
@@ -20,8 +19,19 @@ jest.mock("fs", () => ({
   mkdirSync: jest.fn(),
   writeFileSync: jest.fn(),
 }));
-const mockFsPromises = fs.promises as any;
-const mockFs = fs as any;
+type MockFsPromises = {
+  access: jest.Mock;
+  writeFile: jest.Mock;
+  mkdir: jest.Mock;
+};
+type MockFs = {
+  existsSync: jest.Mock;
+  mkdirSync: jest.Mock;
+  writeFileSync: jest.Mock;
+};
+
+const mockFsPromises = fs.promises as unknown as MockFsPromises;
+const mockFs = fs as unknown as MockFs;
 
 // Mock do path
 jest.mock("path");
@@ -29,6 +39,7 @@ const mockPath = path as jest.Mocked<typeof path>;
 
 describe("UploadsService", () => {
   let service: UploadsService;
+  type AxiosGetCall = [string, { responseType: "arraybuffer"; timeout: number }];
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -51,8 +62,6 @@ describe("UploadsService", () => {
   describe("downloadAndSaveFile", () => {
     const url = "http://example.com/image.jpg";
     const responseData = Buffer.from("image-data");
-    const filename = "image.jpg";
-    const filepath = "uploads/image.jpg";
 
     it("deve baixar e salvar arquivo da URL com sucesso", async () => {
       const mockResponse = {
@@ -67,8 +76,10 @@ describe("UploadsService", () => {
 
       const result = await service.downloadAndSaveFile(url);
 
-      expect(mockAxios.get).toHaveBeenCalledWith(url, { responseType: "arraybuffer", timeout: 10000 });
-      expect(mockFsPromises.writeFile).toHaveBeenCalledWith(expect.stringContaining("uploads/"), responseData);
+      const axiosCall = mockAxios.get.mock.calls[0];
+      expect(axiosCall?.[0]).toBe(url);
+      expect(axiosCall?.[1]).toEqual({ responseType: "arraybuffer", timeout: 10000 });
+      expect(mockFsPromises.writeFile.mock.calls[0]).toEqual([expect.stringContaining("uploads/"), responseData]);
       expect(result).toMatch(/^\/uploads\//);
     });
 
@@ -85,7 +96,7 @@ describe("UploadsService", () => {
 
       await service.downloadAndSaveFile("http://example.com/file.jpg");
 
-      expect(mockFsPromises.writeFile).toHaveBeenCalledWith(expect.stringContaining("uploads/"), responseData);
+      expect(mockFsPromises.writeFile.mock.calls[0]).toEqual([expect.stringContaining("uploads/"), responseData]);
     });
 
     it("deve lançar InternalServerErrorException se o download falhar", async () => {
@@ -120,7 +131,7 @@ describe("UploadsService", () => {
       buffer: Buffer.from([0xff, 0xd8, 0xff, ...Buffer.from("file-content")]),
       originalname: "test.jpg",
       mimetype: "image/jpeg",
-    } as any;
+    } as unknown as Express.Multer.File;
 
     it("deve salvar arquivo enviado com sucesso", async () => {
       mockFs.existsSync.mockReturnValue(false);

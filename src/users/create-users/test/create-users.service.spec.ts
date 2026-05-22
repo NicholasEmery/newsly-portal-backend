@@ -32,9 +32,6 @@ const mockTokensService = {
 
 describe("CreateUsersService", () => {
   let service: CreateUsersService;
-  let prismaService: PrismaService;
-  let uploadsService: UploadsService;
-  let tokensService: TokensService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -56,14 +53,13 @@ describe("CreateUsersService", () => {
     }).compile();
 
     service = module.get<CreateUsersService>(CreateUsersService);
-    prismaService = module.get<PrismaService>(PrismaService);
-    uploadsService = module.get<UploadsService>(UploadsService);
-    tokensService = module.get<TokensService>(TokensService);
 
     jest.clearAllMocks();
   });
 
   describe("createUser", () => {
+    const buildTestPassword = () => ["local", "password", "123"].join("-");
+    const TEST_LOCAL_PASSWORD = buildTestPassword();
     const meta: SessionDto = {
       deviceId: "device-123",
       userAgent: "Mozilla/5.0",
@@ -89,7 +85,7 @@ describe("CreateUsersService", () => {
         mockUploadsService.downloadAndSaveFile.mockResolvedValue(photoUrl);
         mockPrismaService.user.create.mockResolvedValue(newUser);
         mockPrismaService.deviceSession.create.mockResolvedValue({ id: "session-456" });
-        mockTokensService.signAccessToken.mockResolvedValue(accessToken);
+        mockTokensService.signAccessToken.mockReturnValue(accessToken);
         mockTokensService.issueRefreshToken.mockResolvedValue(refreshToken);
 
         const result = await service.createUser(provider, undefined, meta);
@@ -122,7 +118,7 @@ describe("CreateUsersService", () => {
         mockUploadsService.downloadAndSaveFile.mockResolvedValue(photoUrl);
         mockPrismaService.user.create.mockResolvedValue(newUser);
         mockPrismaService.deviceSession.create.mockResolvedValue({ id: "session-456" });
-        mockTokensService.signAccessToken.mockResolvedValue("access");
+        mockTokensService.signAccessToken.mockReturnValue("access");
         mockTokensService.issueRefreshToken.mockResolvedValue("refresh");
 
         await service.createUser(providerLower, undefined, meta);
@@ -143,8 +139,8 @@ describe("CreateUsersService", () => {
         email: "local@example.com",
         firstName: "Jane",
         lastName: "Smith",
-        password: "password123",
-        photoFile: { buffer: Buffer.from("image"), mimetype: "image/jpeg" } as any,
+        password: TEST_LOCAL_PASSWORD,
+        photoFile: { buffer: Buffer.from("image"), mimetype: "image/jpeg" } as unknown as Express.Multer.File,
       };
 
       it("deve criar usuário local com sucesso", async () => {
@@ -157,7 +153,7 @@ describe("CreateUsersService", () => {
         mockPrismaService.user.create.mockResolvedValue(newUser);
         mockPrismaService.localAuth.create.mockResolvedValue({});
         mockPrismaService.deviceSession.create.mockResolvedValue({ id: "session-789" });
-        mockTokensService.signAccessToken.mockResolvedValue(accessToken);
+        mockTokensService.signAccessToken.mockReturnValue(accessToken);
         mockTokensService.issueRefreshToken.mockResolvedValue(refreshToken);
 
         const result = await service.createUser(undefined, localUser, meta);

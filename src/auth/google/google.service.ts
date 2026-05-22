@@ -9,6 +9,30 @@ import { SessionDto } from "../dto/session.dto";
 import { TokensService } from "../tokens.service";
 import { TokenHelper } from "../util/generateTokens";
 
+type GoogleLinkCachePayload = {
+  userId: string;
+  provider: UserGoogleDto;
+  meta: SessionDto;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isGoogleLinkCachePayload(value: unknown): value is GoogleLinkCachePayload {
+  return (
+    isRecord(value) &&
+    typeof value.userId === "string" &&
+    isRecord(value.provider) &&
+    typeof value.provider.provider === "string" &&
+    typeof value.provider.providerId === "string" &&
+    isRecord(value.meta) &&
+    typeof value.meta.deviceId === "string" &&
+    typeof value.meta.userAgent === "string" &&
+    typeof value.meta.ip === "string"
+  );
+}
+
 @Injectable()
 export class GoogleService {
   constructor(
@@ -62,7 +86,7 @@ export class GoogleService {
       }
 
       // Gerar tokens usando TokensService
-      const accessToken = await this.tokensService.signAccessToken(userId, session.id);
+      const accessToken = this.tokensService.signAccessToken(userId, session.id);
       const refreshToken = await this.tokensService.issueRefreshToken(session.id);
       const message = "Usuário autenticado com sucesso via Google.";
 
@@ -121,7 +145,7 @@ export class GoogleService {
     if (!user) throw new NotFoundException("Usuário não encontrado.");
 
     // Gerar token único
-    const token = await this.tokenHelper.generateOpaqueToken(32);
+    const token = this.tokenHelper.generateOpaqueToken(32);
 
     // Armazenar no Redis com TTL (10 min)
     const data = JSON.stringify({ userId: user.id, provider, meta });
@@ -139,10 +163,14 @@ export class GoogleService {
 
   // Método para confirmar link via token
   async confirmGoogleLink(token: string): Promise<{ message: string; accessToken: string; refreshToken: string }> {
-    const cached = await this.cacheManager.get(`google-link:${token}`);
+    const cached = await Promise.resolve(this.cacheManager.get<string>(`google-link:${token}`));
     if (!cached) throw new BadRequestException("Token inválido ou expirado.");
 
-    const { userId, provider, meta } = JSON.parse(cached as string);
+    const parsed: unknown = JSON.parse(cached);
+    if (!isGoogleLinkCachePayload(parsed)) {
+      throw new BadRequestException("Token inválido ou expirado.");
+    }
+    const { userId, provider, meta } = parsed;
 
     // Criar socialAuth
     await this.prisma.socialAuth.create({
@@ -175,7 +203,7 @@ export class GoogleService {
       });
     }
 
-    const accessToken = await this.tokensService.signAccessToken(userId, session.id);
+    const accessToken = this.tokensService.signAccessToken(userId, session.id);
     const refreshToken = await this.tokensService.issueRefreshToken(session.id);
     const message = "Google vinculado com sucesso.";
 

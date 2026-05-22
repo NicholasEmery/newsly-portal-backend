@@ -51,12 +51,6 @@ const mockCacheManager = {
 
 describe("GoogleService", () => {
   let service: GoogleService;
-  let prismaService: PrismaService;
-  let createUsersService: CreateUsersService;
-  let tokensService: TokensService;
-  let emailService: EmailService;
-  let tokenHelper: TokenHelper;
-  let cacheManager: Cache;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -90,12 +84,12 @@ describe("GoogleService", () => {
     }).compile();
 
     service = module.get<GoogleService>(GoogleService);
-    prismaService = module.get<PrismaService>(PrismaService);
-    createUsersService = module.get<CreateUsersService>(CreateUsersService);
-    tokensService = module.get<TokensService>(TokensService);
-    emailService = module.get<EmailService>(EmailService);
-    tokenHelper = module.get<TokenHelper>(TokenHelper);
-    cacheManager = module.get<Cache>(CACHE_MANAGER);
+    module.get<PrismaService>(PrismaService);
+    module.get<CreateUsersService>(CreateUsersService);
+    module.get<TokensService>(TokensService);
+    module.get<EmailService>(EmailService);
+    module.get<TokenHelper>(TokenHelper);
+    module.get<Cache>(CACHE_MANAGER);
 
     jest.clearAllMocks();
   });
@@ -125,7 +119,7 @@ describe("GoogleService", () => {
 
       mockPrismaService.socialAuth.findUnique.mockResolvedValue(socialAuth);
       mockPrismaService.deviceSession.findFirst.mockResolvedValue(session);
-      mockTokensService.signAccessToken.mockResolvedValue(accessToken);
+      mockTokensService.signAccessToken.mockReturnValue(accessToken);
       mockTokensService.issueRefreshToken.mockResolvedValue(refreshToken);
 
       const result = await service.validateLoginOrCreateUserFromGoogle(provider, meta);
@@ -148,7 +142,7 @@ describe("GoogleService", () => {
       mockPrismaService.socialAuth.findUnique.mockResolvedValue(socialAuth);
       mockPrismaService.deviceSession.findFirst.mockResolvedValue(null);
       mockPrismaService.deviceSession.create.mockResolvedValue(newSession);
-      mockTokensService.signAccessToken.mockResolvedValue(accessToken);
+      mockTokensService.signAccessToken.mockReturnValue(accessToken);
       mockTokensService.issueRefreshToken.mockResolvedValue(refreshToken);
 
       await service.validateLoginOrCreateUserFromGoogle(provider, meta);
@@ -235,7 +229,7 @@ describe("GoogleService", () => {
       const token = "link-token";
 
       mockPrismaService.user.findUnique.mockResolvedValue(user);
-      mockTokenHelper.generateOpaqueToken.mockResolvedValue(token);
+      mockTokenHelper.generateOpaqueToken.mockReturnValue(token);
       mockCacheManager.set.mockResolvedValue(undefined);
       mockEmailService.sendEmail.mockResolvedValue(undefined);
 
@@ -305,9 +299,9 @@ describe("GoogleService", () => {
       const accessToken = "access-token";
       const refreshToken = "refresh-token";
 
-      mockCacheManager.get.mockResolvedValue(JSON.stringify(cachedData));
+      mockCacheManager.get.mockReturnValue(JSON.stringify(cachedData));
       mockPrismaService.deviceSession.findFirst.mockResolvedValue(session);
-      mockTokensService.signAccessToken.mockResolvedValue(accessToken);
+      mockTokensService.signAccessToken.mockReturnValue(accessToken);
       mockTokensService.issueRefreshToken.mockResolvedValue(refreshToken);
       mockPrismaService.socialAuth.create.mockResolvedValue({});
       mockCacheManager.del.mockResolvedValue(undefined);

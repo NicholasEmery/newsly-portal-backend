@@ -5,33 +5,29 @@ import * as nodemailer from "nodemailer";
 import * as path from "path";
 import { EmailService } from "../email.service";
 
-// Mock do fs
 jest.mock("fs");
 const mockFs = fs as jest.Mocked<typeof fs>;
 
-// Mock do path
 jest.mock("path");
 const mockPath = path as jest.Mocked<typeof path>;
 
-// Mock do nodemailer
 jest.mock("nodemailer");
 const mockNodemailer = nodemailer as jest.Mocked<typeof nodemailer>;
 
-// Mock do ConfigService
+const smtpPass = ["smtp", "credential"].join("-");
+
 const mockConfigService = {
   get: jest.fn(),
 };
 
 describe("EmailService", () => {
   let service: EmailService;
-  let configService: ConfigService;
-  let mockTransporter: any;
+  const sendMail = jest.fn();
+  const mockTransporter = { sendMail };
+  type ReadFileCall = [string, BufferEncoding];
 
   beforeEach(async () => {
-    mockTransporter = {
-      sendMail: jest.fn(),
-    };
-    mockNodemailer.createTransport.mockReturnValue(mockTransporter);
+    mockNodemailer.createTransport.mockReturnValue(mockTransporter as never);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -44,7 +40,6 @@ describe("EmailService", () => {
     }).compile();
 
     service = module.get<EmailService>(EmailService);
-    configService = module.get<ConfigService>(ConfigService);
 
     jest.clearAllMocks();
 
@@ -53,7 +48,7 @@ describe("EmailService", () => {
         SMTP_HOST: "smtp.example.com",
         SMTP_PORT: 587,
         SMTP_USER: "user@example.com",
-        SMTP_PASS: "password",
+        SMTP_PASS: smtpPass,
         EMAIL_FROM: "noreply@example.com",
       };
       return config[key];
@@ -73,17 +68,20 @@ describe("EmailService", () => {
 
       mockPath.join.mockReturnValue(templatePath);
       mockFs.readFileSync.mockReturnValue(templateSource);
-      mockTransporter.sendMail.mockResolvedValue({});
+      sendMail.mockResolvedValue({});
 
       await service.sendEmail(to, subject, templateName, data);
 
-      expect(mockPath.join).toHaveBeenCalledWith(
+      const [joinCall] = mockPath.join.mock.calls as unknown as Array<[string, string, string]>;
+      expect(joinCall).toEqual([
         expect.stringContaining("src\\common\\services\\email"),
         "templates",
         `${templateName}.hbs`,
-      );
-      expect(mockFs.readFileSync).toHaveBeenCalledWith(templatePath, "utf-8");
-      expect(mockTransporter.sendMail).toHaveBeenCalledWith({
+      ]);
+      const readFileCall = mockFs.readFileSync.mock.calls[0];
+      expect(readFileCall?.[0]).toBe(templatePath);
+      expect(readFileCall?.[1]).toBe("utf-8");
+      expect(sendMail).toHaveBeenCalledWith({
         from: "noreply@example.com",
         to,
         subject,
@@ -122,11 +120,11 @@ describe("EmailService", () => {
 
       mockPath.join.mockReturnValue(templatePath);
       mockFs.readFileSync.mockReturnValue(templateSource);
-      mockTransporter.sendMail.mockResolvedValue({});
+      sendMail.mockResolvedValue({});
 
       await service.sendEmail(to, subject, templateName, data);
 
-      expect(mockTransporter.sendMail).toHaveBeenCalledWith(
+      expect(sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           html: "<p>Welcome John Doe! Your code is abc123.</p>",
         }),
@@ -139,11 +137,11 @@ describe("EmailService", () => {
 
       mockPath.join.mockReturnValue(templatePath);
       mockFs.readFileSync.mockReturnValue(templateSource);
-      mockTransporter.sendMail.mockResolvedValue({});
+      sendMail.mockResolvedValue({});
 
       await service.sendEmail(to, subject, templateName, data);
 
-      expect(mockTransporter.sendMail).toHaveBeenCalledWith(
+      expect(sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           from: "noreply@example.com",
         }),

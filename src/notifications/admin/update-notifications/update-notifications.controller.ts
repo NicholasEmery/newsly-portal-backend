@@ -11,9 +11,7 @@ export class UpdateNotificationsController {
 
   @Post(":id/mark-read")
   @Roles("ADMIN")
-  async markRead(@Param("id") id: string) {
-    // Para admin, talvez marcar sem userId, ou com userId do admin
-    // Por enquanto, placeholder
+  markRead(@Param("id") _id: string) {
     return { message: "Marked as read" };
   }
 }

@@ -4,12 +4,10 @@ import { PrismaService } from "src/database/prisma.service";
 import { TokensService } from "./tokens.service";
 import { TokenHelper } from "./util/generateTokens";
 
-// Mock do JwtService
 const mockJwtService = {
   sign: jest.fn(),
 };
 
-// Mock do PrismaService
 const mockPrismaService = {
   deviceSession: {
     update: jest.fn(),
@@ -17,7 +15,6 @@ const mockPrismaService = {
   },
 };
 
-// Mock do TokenHelper
 const mockTokenHelper = {
   generateOpaqueToken: jest.fn(),
   hashToken: jest.fn(),
@@ -26,9 +23,14 @@ const mockTokenHelper = {
 
 describe("TokensService", () => {
   let service: TokensService;
-  let jwtService: JwtService;
-  let prismaService: PrismaService;
-  let tokenHelper: TokenHelper;
+
+  type DeviceSessionUpdateArgs = {
+    where: { id: string };
+    data: {
+      refreshTokenHash: string;
+      refreshExpiresAt: Date;
+    };
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -50,39 +52,33 @@ describe("TokensService", () => {
     }).compile();
 
     service = module.get<TokensService>(TokensService);
-    jwtService = module.get<JwtService>(JwtService);
-    prismaService = module.get<PrismaService>(PrismaService);
-    tokenHelper = module.get<TokenHelper>(TokenHelper);
 
-    // Resetar mocks antes de cada teste
     jest.clearAllMocks();
 
-    // Definir variáveis de ambiente para os testes
     process.env.ACCESS_EXPIRES_IN = "15d";
     process.env.REFRESH_EXPIRES_DAYS = "30";
   });
 
   describe("signAccessToken", () => {
-    it("deve gerar um token de acesso com sucesso", async () => {
-      // Configurar variáveis de ambiente para o teste
+    it("deve gerar um token de acesso com sucesso", () => {
       process.env.ACCESS_EXPIRES_IN = "15d";
 
       const userId = "user-123";
       const sessionId = "session-456";
       const expectedToken = "access-token-jwt";
 
-      (jwtService.sign as jest.Mock).mockReturnValue(expectedToken);
+      mockJwtService.sign.mockReturnValue(expectedToken);
 
-      const result = await service.signAccessToken(userId, sessionId);
+      const result = service.signAccessToken(userId, sessionId);
 
       expect(mockJwtService.sign).toHaveBeenCalledWith({ sub: userId, sid: sessionId }, { expiresIn: "15d" });
       expect(result).toBe(expectedToken);
     });
 
-    it("deve lançar InternalServerErrorException se ACCESS_EXPIRES_IN não estiver definido", async () => {
+    it("deve lançar InternalServerErrorException se ACCESS_EXPIRES_IN não estiver definido", () => {
       delete process.env.ACCESS_EXPIRES_IN;
 
-      await expect(service.signAccessToken("user-123", "session-456")).rejects.toThrow(
+      expect(() => service.signAccessToken("user-123", "session-456")).toThrow(
         "ACCESS_EXPIRES_IN não está definido nas variáveis de ambiente",
       );
     });
@@ -97,22 +93,28 @@ describe("TokensService", () => {
       const hashedToken = "hashed-token";
       const expectedToken = token;
 
-      mockTokenHelper.generateOpaqueToken.mockResolvedValue(token);
+      mockTokenHelper.generateOpaqueToken.mockReturnValue(token);
       mockTokenHelper.hashToken.mockResolvedValue(hashedToken);
-      mockPrismaService.deviceSession.update.mockResolvedValue({});
+      mockPrismaService.deviceSession.update.mockResolvedValue({
+        refreshTokenHash: hashedToken,
+        refreshExpiresAt: new Date(),
+      });
 
-      const result = await service.issueRefreshToken(sessionId);
+      await expect(service.issueRefreshToken(sessionId)).resolves.toBe(expectedToken);
 
       expect(mockTokenHelper.generateOpaqueToken).toHaveBeenCalledWith(48);
       expect(mockTokenHelper.hashToken).toHaveBeenCalledWith(token);
-      expect(mockPrismaService.deviceSession.update).toHaveBeenCalledWith({
+      const [[updateArgs]] = mockPrismaService.deviceSession.update.mock.calls as unknown as [
+        [DeviceSessionUpdateArgs],
+      ];
+
+      expect(updateArgs).toMatchObject({
         where: { id: sessionId },
         data: {
           refreshTokenHash: hashedToken,
-          refreshExpiresAt: expect.any(Date), // Verificar se é uma data
         },
       });
-      expect(result).toBe(expectedToken);
+      expect(updateArgs.data.refreshExpiresAt).toBeInstanceOf(Date);
     });
 
     it("deve lançar InternalServerErrorException se REFRESH_EXPIRES_DAYS não estiver definido", async () => {

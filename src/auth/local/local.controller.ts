@@ -5,6 +5,10 @@ import { UserLocalSignUpDto } from "./dto/local-signup.dto";
 import { LocalService } from "./local.service";
 import { SessionDto } from "../dto/session.dto";
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Erro inesperado";
+}
+
 @ApiTags("Authentication Local")
 @Controller("auth/local")
 export class LocalController {
@@ -19,8 +23,8 @@ export class LocalController {
     const { user, meta } = body;
     try {
       return await this.localService.LoginFromLocal(user, meta);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    } catch (error: unknown) {
+      throw new HttpException(getErrorMessage(error), HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -31,8 +35,8 @@ export class LocalController {
     const { user, meta } = body;
     try {
       return await this.localService.SignUpFromLocal(user, meta);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    } catch (error: unknown) {
+      throw new HttpException(getErrorMessage(error), HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -44,8 +48,8 @@ export class LocalController {
   ): Promise<{ message: string; accessToken: string; refreshToken: string }> {
     try {
       return await this.localService.confirmEmailVerification(token);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    } catch (error: unknown) {
+      throw new HttpException(getErrorMessage(error), HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -54,8 +58,8 @@ export class LocalController {
     try {
       await this.localService.initiatePasswordReset(body.email);
       return { message: "Email de redefinição de senha enviado" };
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    } catch (error: unknown) {
+      throw new HttpException(getErrorMessage(error), HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -64,8 +68,8 @@ export class LocalController {
     try {
       await this.localService.confirmPasswordReset(body.token, body.newPassword);
       return { message: "Senha redefinida com sucesso" };
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    } catch (error: unknown) {
+      throw new HttpException(getErrorMessage(error), HttpStatus.BAD_REQUEST);
     }
   }
 }

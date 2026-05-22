@@ -2,6 +2,10 @@ import { Controller, Post, Body, HttpException, HttpStatus } from "@nestjs/commo
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { TokensService } from "./tokens.service";
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Erro inesperado";
+}
+
 @ApiTags("Authentication")
 @Controller("auth")
 export class AuthController {
@@ -15,8 +19,8 @@ export class AuthController {
     try {
       const newTokens = await this.tokensService.refreshTokens(refreshToken);
       return newTokens;
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
+    } catch (error: unknown) {
+      throw new HttpException(getErrorMessage(error), HttpStatus.UNAUTHORIZED);
     }
   }
 }

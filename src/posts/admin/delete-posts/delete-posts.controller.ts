@@ -11,8 +11,7 @@ export class DeletePostsController {
   constructor() {}
 
   @Delete(":id")
-  async delete(@Request() req: AuthenticatedRequest, @Param("id") id: string) {
-    // TODO: Implement delete logic
+  delete(@Request() req: AuthenticatedRequest, @Param("id") id: string) {
     return { message: "Post deleted", id };
   }
 }

@@ -88,7 +88,7 @@ export class CreateUsersService {
     });
 
     // Gerar tokens
-    const accessTokenUser = await this.tokensService.signAccessToken(newUser.id, session.id);
+    const accessTokenUser = this.tokensService.signAccessToken(newUser.id, session.id);
     const refreshTokenUser = await this.tokensService.issueRefreshToken(session.id);
 
     return { accessTokenUser, refreshTokenUser };

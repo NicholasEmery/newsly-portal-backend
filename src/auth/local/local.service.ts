@@ -1,7 +1,6 @@
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Injectable, Inject, BadRequestException, NotFoundException } from "@nestjs/common";
 import { Cache } from "cache-manager";
-import { connect } from "http2";
 import { EmailService } from "src/common/services/email/email.service";
 import { PrismaService } from "src/database/prisma.service";
 import { CreateUsersService } from "src/users/create-users/create-users.service";
@@ -10,6 +9,38 @@ import { UserLocalSignInDto } from "./dto/local-signin.dto";
 import { UserLocalSignUpDto } from "./dto/local-signup.dto";
 import { SessionDto } from "../dto/session.dto";
 import { TokenHelper } from "../util/generateTokens";
+
+type LocalSignupCachePayload = {
+  localUser: UserLocalSignUpDto;
+  meta: SessionDto;
+};
+
+type PasswordResetCachePayload = {
+  userId: string;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isLocalSignupCachePayload(value: unknown): value is LocalSignupCachePayload {
+  return (
+    isRecord(value) &&
+    isRecord(value.localUser) &&
+    typeof value.localUser.email === "string" &&
+    typeof value.localUser.firstName === "string" &&
+    typeof value.localUser.lastName === "string" &&
+    typeof value.localUser.password === "string" &&
+    isRecord(value.meta) &&
+    typeof value.meta.deviceId === "string" &&
+    typeof value.meta.userAgent === "string" &&
+    typeof value.meta.ip === "string"
+  );
+}
+
+function isPasswordResetCachePayload(value: unknown): value is PasswordResetCachePayload {
+  return isRecord(value) && typeof value.userId === "string";
+}
 
 @Injectable()
 export class LocalService {
@@ -73,7 +104,7 @@ export class LocalService {
     // Aqui você geraria os tokens JWT de acesso e refresh
     // Exemplo fictício:
     // Gerar tokens usando TokensService
-    const accessToken = await this.tokensService.signAccessToken(user.id, session.id);
+    const accessToken = this.tokensService.signAccessToken(user.id, session.id);
     const refreshToken = await this.tokensService.issueRefreshToken(session.id);
 
     return { message: "Login local bem-sucedido", accessToken, refreshToken };
@@ -89,7 +120,7 @@ export class LocalService {
     }
 
     // Gerar token único
-    const token = await this.tokenHelper.generateOpaqueToken(32);
+    const token = this.tokenHelper.generateOpaqueToken(32);
 
     // Armazenar no Redis com TTL (24 horas)
     const data = JSON.stringify({ localUser, meta });
@@ -109,10 +140,14 @@ export class LocalService {
   async confirmEmailVerification(
     token: string,
   ): Promise<{ message: string; accessToken: string; refreshToken: string }> {
-    const cached = await this.cacheManager.get(`local-signup:${token}`);
+    const cached = await Promise.resolve(this.cacheManager.get<string>(`local-signup:${token}`));
     if (!cached) throw new BadRequestException("Token inválido ou expirado.");
 
-    const { localUser, meta } = JSON.parse(cached as string);
+    const parsed: unknown = JSON.parse(cached);
+    if (!isLocalSignupCachePayload(parsed)) {
+      throw new BadRequestException("Token inválido ou expirado.");
+    }
+    const { localUser, meta } = parsed;
 
     // Criar usuário
     const { accessTokenUser, refreshTokenUser } = await this.userService.createUser(undefined, localUser, meta);
@@ -140,7 +175,7 @@ export class LocalService {
     }
 
     // Gerar token único
-    const token = await this.tokenHelper.generateOpaqueToken(32);
+    const token = this.tokenHelper.generateOpaqueToken(32);
 
     // Armazenar no Redis com TTL (1 hora)
     const data = JSON.stringify({ userId: user.id });
@@ -157,9 +192,13 @@ export class LocalService {
   }
 
   async confirmPasswordReset(token: string, newPassword: string): Promise<boolean> {
-    const cached = await this.cacheManager.get(`password-reset:${token}`);
+    const cached = await Promise.resolve(this.cacheManager.get<string>(`password-reset:${token}`));
     if (!cached) throw new BadRequestException("Token inválido ou expirado.");
-    const { userId } = JSON.parse(cached as string);
+    const parsed: unknown = JSON.parse(cached);
+    if (!isPasswordResetCachePayload(parsed)) {
+      throw new BadRequestException("Token inválido ou expirado.");
+    }
+    const { userId } = parsed;
 
     const passwordHash = await this.tokenHelper.hashToken(newPassword);
 

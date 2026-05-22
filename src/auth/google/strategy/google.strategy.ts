@@ -20,7 +20,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, "google") {
     });
   }
 
-  validate(_req: any, _accessToken: string, _refreshToken: string, profile: Profile) {
+  validate(_req: unknown, _accessToken: string, _refreshToken: string, profile: Profile) {
     const email = profile.emails?.[0]?.value;
 
     return {

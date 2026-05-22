@@ -1,15 +1,34 @@
-import { UnauthorizedException } from "@nestjs/common";
+import { ExecutionContext } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Test, TestingModule } from "@nestjs/testing";
 import { PrismaService } from "src/database/prisma.service";
 import { AuthGuard } from "../common/guards/auth.guard";
 
-// Mock do JwtService
+type MockRequest = {
+  headers: {
+    authorization?: string;
+  };
+  user?: {
+    id: string;
+    role: unknown;
+  };
+};
+
+type GuardWithExtractor = {
+  extractTokenFromHeader(request: { headers: { authorization?: string } }): string | undefined;
+};
+
+const createMockContext = (request: MockRequest): ExecutionContext =>
+  ({
+    switchToHttp: () => ({
+      getRequest: () => request,
+    }),
+  }) as ExecutionContext;
+
 const mockJwtService = {
   verifyAsync: jest.fn(),
 };
 
-// Mock do PrismaService
 const mockPrismaService = {
   deviceSession: {
     findUnique: jest.fn(),
@@ -18,8 +37,6 @@ const mockPrismaService = {
 
 describe("AuthGuard", () => {
   let guard: AuthGuard;
-  let jwtService: JwtService;
-  let prismaService: PrismaService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -37,21 +54,17 @@ describe("AuthGuard", () => {
     }).compile();
 
     guard = module.get<AuthGuard>(AuthGuard);
-    jwtService = module.get<JwtService>(JwtService);
-    prismaService = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
   });
 
   describe("canActivate", () => {
     it("deve permitir acesso com token válido e sessão existente", async () => {
-      const mockRequest = {
+      const mockRequest: MockRequest = {
         headers: { authorization: "Bearer valid-token" },
         user: undefined,
       };
-      const mockContext = {
-        switchToHttp: () => ({ getRequest: () => mockRequest }),
-      } as any;
+      const mockContext = createMockContext(mockRequest);
 
       const payload = { sub: "user-123", sessionId: "session-456" };
       const session = {
@@ -73,34 +86,28 @@ describe("AuthGuard", () => {
     });
 
     it("deve lançar UnauthorizedException se o token não for fornecido", async () => {
-      const mockRequest = {
+      const mockRequest: MockRequest = {
         headers: {},
       };
-      const mockContext = {
-        switchToHttp: () => ({ getRequest: () => mockRequest }),
-      } as any;
+      const mockContext = createMockContext(mockRequest);
 
       await expect(guard.canActivate(mockContext)).rejects.toThrow("Token não fornecido");
     });
 
     it("deve lançar UnauthorizedException se o header authorization não for Bearer", async () => {
-      const mockRequest = {
+      const mockRequest: MockRequest = {
         headers: { authorization: "Basic token" },
       };
-      const mockContext = {
-        switchToHttp: () => ({ getRequest: () => mockRequest }),
-      } as any;
+      const mockContext = createMockContext(mockRequest);
 
       await expect(guard.canActivate(mockContext)).rejects.toThrow("Token não fornecido");
     });
 
     it("deve lançar UnauthorizedException se o JWT for inválido", async () => {
-      const mockRequest = {
+      const mockRequest: MockRequest = {
         headers: { authorization: "Bearer invalid-token" },
       };
-      const mockContext = {
-        switchToHttp: () => ({ getRequest: () => mockRequest }),
-      } as any;
+      const mockContext = createMockContext(mockRequest);
 
       mockJwtService.verifyAsync.mockRejectedValue(new Error("Invalid token"));
 
@@ -108,12 +115,10 @@ describe("AuthGuard", () => {
     });
 
     it("deve lançar UnauthorizedException se a sessão não existir", async () => {
-      const mockRequest = {
+      const mockRequest: MockRequest = {
         headers: { authorization: "Bearer valid-token" },
       };
-      const mockContext = {
-        switchToHttp: () => ({ getRequest: () => mockRequest }),
-      } as any;
+      const mockContext = createMockContext(mockRequest);
 
       const payload = { sub: "user-123", sessionId: "session-456" };
 
@@ -124,12 +129,10 @@ describe("AuthGuard", () => {
     });
 
     it("deve lançar UnauthorizedException se o userId da sessão não corresponder", async () => {
-      const mockRequest = {
+      const mockRequest: MockRequest = {
         headers: { authorization: "Bearer valid-token" },
       };
-      const mockContext = {
-        switchToHttp: () => ({ getRequest: () => mockRequest }),
-      } as any;
+      const mockContext = createMockContext(mockRequest);
 
       const payload = { sub: "user-123", sessionId: "session-456" };
       const session = {
@@ -148,19 +151,19 @@ describe("AuthGuard", () => {
   describe("extractTokenFromHeader", () => {
     it("deve extrair o token corretamente do header Bearer", () => {
       const request = { headers: { authorization: "Bearer my-token" } };
-      const token = (guard as any).extractTokenFromHeader(request);
+      const token = (guard as GuardWithExtractor).extractTokenFromHeader(request);
       expect(token).toBe("my-token");
     });
 
     it("deve retornar undefined se o header não for Bearer", () => {
       const request = { headers: { authorization: "Basic my-token" } };
-      const token = (guard as any).extractTokenFromHeader(request);
+      const token = (guard as GuardWithExtractor).extractTokenFromHeader(request);
       expect(token).toBeUndefined();
     });
 
     it("deve retornar undefined se não houver header authorization", () => {
       const request = { headers: {} };
-      const token = (guard as any).extractTokenFromHeader(request);
+      const token = (guard as GuardWithExtractor).extractTokenFromHeader(request);
       expect(token).toBeUndefined();
     });
   });

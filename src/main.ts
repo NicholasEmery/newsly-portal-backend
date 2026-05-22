@@ -45,12 +45,16 @@ async function bootstrap() {
   });
 
   // Obtém porta do ambiente, padrão 3001
-  const port = configService.get("PORT");
+  const port = configService.get<string>("PORT");
   if (!port) {
     console.warn("PORT environment variable is not set. Using default port 3333.");
   }
   // Inicia servidor na porta especificada
-  await app.listen(port || 3333);
+  await app.listen(port ? Number(port) : 3333);
 }
 // Chama bootstrap para iniciar a app
-bootstrap();
+void bootstrap().catch((error: unknown) => {
+  const message = error instanceof Error ? error.message : "Unknown bootstrap error";
+  console.error(message);
+  process.exit(1);
+});

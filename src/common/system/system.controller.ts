@@ -14,7 +14,7 @@ export class SystemController {
     description: "API está saudável",
     schema: { example: { status: "ok", service: "newsly-api", featureFlag: "mock-feature-flow" } },
   })
-  async health() {
+  health() {
     return this.systemService.checkHealth();
   }
 
@@ -29,7 +29,7 @@ export class SystemController {
     status: 503,
     description: "API não está pronta - alguma dependência falhou",
   })
-  async ready() {
+  ready() {
     return this.systemService.checkReadiness();
   }
 }

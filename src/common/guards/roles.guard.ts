@@ -1,5 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
+import { AuthenticatedRequest } from "../interfaces/auth.interface";
 import { ROLES_KEY } from "../decorators/roles.decorator";
 
 @Injectable()
@@ -16,8 +17,8 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const user = request.user; // Definido pelo AuthGuard (objeto User completo)
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const user = request.user;
 
     if (!user || !user.role) {
       throw new UnauthorizedException("Usuário não autenticado ou role ausente");

@@ -1,11 +1,9 @@
 // Importações para o serviço de edição de posts
 // Injectable: Decorator para injeção de dependências
 import { Post } from "@generated/prisma/browser";
-import { User } from "@generated/prisma/client";
 import { PostStatus, Role, RequestStatus } from "@generated/prisma/enums";
 import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
 // PrismaService: Acesso ao banco de dados
-import request from "supertest";
 import { RequestEditDto } from "./dto/request-edit.dto";
 import { UpdateCreationStatusDto } from "./dto/update-creation-status.dto";
 import { UpdatePostDto } from "./dto/update-post.dto";
@@ -13,82 +11,76 @@ import { PrismaService } from "../../../database/prisma.service";
 // UpdatePostDto: DTO para edição
 // PostStatus: Enum de status
 
-// Classe UpdatePostsService: Serviço para edição de posts
-// Lógica: Valida permissões, cria requests de edição, aprova/rejeita
-// Caso de uso: Colaboradores editando posts com aprovação
 @Injectable()
 export class UpdatePostsService {
-  // Construtor: Injeta PrismaService
   constructor(private readonly prisma: PrismaService) {}
 
-  // Método requestEdit: Solicita edição de post
-  // Lógica: Cria EditRequest pendente
-  // Exemplo: requestEdit(userId, postId, dto) -> EditRequest
-  // Caso de uso: Colaborador solicitando edição
-  // async requestEdit(userId: string, postId: string, dto: UpdatePostDto) {
-  //   const post = await this.prisma.post.findUnique({
-  //     where: { id: postId },
-  //     include: { collaborators: { select: { userId: true, permissions: true } } },
-  //   });
-  //   if (!post) throw new NotFoundException("Post not found");
+  private isRequestEditDto(obj: unknown): obj is RequestEditDto {
+    return typeof obj === 'object' && obj !== null && 'proposedChanges' in obj;
+  }
 
-  //   const isCollaborator = post.collaborators.some((collab) => collab.userId === userId);
-  //   const canEditWithoutApproval = post.collaborators.some(
-  //     (collab) => collab.userId === userId && collab.permissions.includes("NO_REQUEST_EDITOR"),
-  //   );
-  //   if (!isCollaborator || canEditWithoutApproval) throw new ForbiddenException("No permission to request edit");
-
-  //   // Cria EditRequest
-  //   return this.prisma.editRequest.create({
-  //     data: {
-  //       postId,
-  //       requesterId: userId,
-  //       proposedChanges: JSON.parse(JSON.stringify(dto)),
-  //     },
-  //   });
-  // }
+  private normalizePagination(query: Record<string, unknown>) {
+    const status = typeof query.status === 'string' ? query.status : undefined;
+    let page = 1;
+    if (typeof query.page === 'number') page = query.page;
+    else if (typeof query.page === 'string') page = Number(query.page);
+    let limit = 10;
+    if (typeof query.limit === 'number') limit = query.limit;
+    else if (typeof query.limit === 'string') limit = Number(query.limit);
+    return { status, page, limit };
+  }
 
   // Método updatePost: Atualiza post ou cria request baseado no role
   async updatePost(userId: string, postId: string, body: UpdatePostDto | RequestEditDto, role: Role) {
     if (role === Role.ADMIN) {
-      return this.prisma.post.update({
-        where: { id: postId },
-        data: body as any,
-      });
+      // Normaliza payload (pode ser UpdatePostDto ou RequestEditDto)
+      const changes = this.isRequestEditDto(body) ? body.proposedChanges : (body);
+      const ch = changes as Partial<Record<'title' | 'content' | 'image' | 'categories', unknown>>;
+      const updateData: Partial<Post> = {};
+      if (typeof ch.title === 'string') updateData.title = ch.title;
+      if (typeof ch.content === 'string') updateData.content = ch.content;
+      if (typeof ch.image === 'string') updateData.imageUrl = String(ch.image);
+      if (Array.isArray(ch.categories)) updateData.categories = ch.categories as unknown as Post['categories'];
+
+      return this.prisma.post.update({ where: { id: postId }, data: updateData as unknown as Record<string, unknown> });
     } else {
-      // Para Creator e Collaborator, cria EditRequest
-      const post = await this.prisma.post.findUnique({
-        where: { id: postId },
-        include: { collaborators: { select: { userId: true, permissions: true } } },
-      });
-      if (!post) throw new NotFoundException("Post not found");
-
-      let targetRole: Role;
-      if (role === Role.CREATOR) {
-        if (post.creatorId !== userId) throw new ForbiddenException("Only the post creator can request edits");
-        targetRole = Role.ADMIN;
-      } else if (role === Role.COLLABORATOR) {
-        const isCollaborator = post.collaborators.some((collab) => collab.userId === userId);
-        if (!isCollaborator) throw new ForbiddenException("Only collaborators can request edits");
-        // Verificar se tem permissão para editar sem aprovação do creator
-        const hasNoRequestPermission = post.collaborators.some(
-          (collab) => collab.userId === userId && collab.permissions.includes("NO_REQUEST_EDITOR"),
-        );
-        targetRole = hasNoRequestPermission ? Role.ADMIN : Role.CREATOR;
-      } else {
-        throw new ForbiddenException("Invalid role for request");
-      }
-
-      return this.prisma.editRequest.create({
-        data: {
-          postId,
-          requesterId: userId,
-          targetRole,
-          proposedChanges: body as any,
-          status: RequestStatus.PENDING,
-        },
-      });
+      return this.createEditRequest(userId, postId, body, role);
     }
+  }
+
+  private async createEditRequest(userId: string, postId: string, body: UpdatePostDto | RequestEditDto, role: Role) {
+    const post = await this.prisma.post.findUnique({
+      where: { id: postId },
+      include: { collaborators: { select: { userId: true, permissions: true } } },
+    });
+    if (!post) throw new NotFoundException('Post not found');
+
+    let targetRole: Role;
+    if (role === Role.CREATOR) {
+      if (post.creatorId !== userId) throw new ForbiddenException('Only the post creator can request edits');
+      targetRole = Role.ADMIN;
+    } else if (role === Role.COLLABORATOR) {
+      const isCollaborator = post.collaborators.some((collab) => collab.userId === userId);
+      if (!isCollaborator) throw new ForbiddenException('Only collaborators can request edits');
+      const hasNoRequestPermission = post.collaborators.some(
+        (collab) => collab.userId === userId && Array.isArray(collab.permissions) && collab.permissions.includes('NO_REQUEST_EDITOR'),
+      );
+      targetRole = hasNoRequestPermission ? Role.ADMIN : Role.CREATOR;
+    } else {
+      throw new ForbiddenException('Invalid role for request');
+    }
+
+    const proposed = this.isRequestEditDto(body) ? body.proposedChanges : (body);
+
+    return this.prisma.editRequest.create({
+      data: {
+        postId,
+        requesterId: userId,
+        targetRole,
+        proposedChanges: proposed as any,
+        status: RequestStatus.PENDING,
+      },
+    });
   }
   async approveEdit(userId: string, userRole: string, requestId: string, reason?: string) {
     const request = await this.prisma.editRequest.findUnique({
@@ -102,13 +94,14 @@ export class UpdatePostsService {
     if (!isTargetRole || !isTargetUser) throw new ForbiddenException("No permission to approve");
 
     // Filtrar proposedChanges baseado no role do requester
-    let filteredChanges = request.proposedChanges as any;
+    const rawChanges = request.proposedChanges as Record<string, unknown>;
+    let filteredChanges: Partial<Record<'title' | 'content' | 'image' | 'categories', unknown>> = rawChanges;
     if (request.requester.role === Role.COLLABORATOR) {
       // Collaborator só pode editar title, image, content
       filteredChanges = {
-        title: filteredChanges.title,
-        image: filteredChanges.image,
-        content: filteredChanges.content,
+        title: rawChanges.title,
+        image: rawChanges.image,
+        content: rawChanges.content,
       };
     }
     // Creator pode editar tudo
@@ -119,10 +112,10 @@ export class UpdatePostsService {
       await this.prisma.post.update({
         where: { id: request.postId },
         data: {
-          title: filteredChanges.title,
-          content: filteredChanges.content,
-          imageUrl: filteredChanges.image,
-          categories: filteredChanges.categories,
+          title: filteredChanges?.title as any,
+          content: filteredChanges?.content as any,
+          imageUrl: (filteredChanges)?.image as any,
+          categories: (filteredChanges)?.categories as any,
         },
       });
     } else if (request.targetRole === Role.CREATOR && isTargetUser) {
@@ -132,7 +125,7 @@ export class UpdatePostsService {
           postId: request.postId,
           requesterId: userId, // Creator
           targetRole: Role.ADMIN,
-          proposedChanges: filteredChanges, // Usar mudanças filtradas
+          proposedChanges: filteredChanges as any, // Usar mudanças filtradas
           status: RequestStatus.PENDING,
         },
       });
@@ -206,16 +199,14 @@ export class UpdatePostsService {
         reviewedAt: new Date(),
       },
     });
-
-    // TODO: Notificar
-    return;
+    return request.post?.id;
   }
 
-  async getEditRequests(userId: string, userRole: Role, query: any) {
-    const { status, page = 1, limit = 10 } = query;
+  async getEditRequests(userId: string, userRole: Role, query: Record<string, unknown>) {
+    const { status, page, limit } = this.normalizePagination(query);
     const skip = (page - 1) * limit;
 
-    const where: any = { status, targetRole: userRole };
+    const where: Record<string, unknown> = { status, targetRole: userRole };
     if (userRole === Role.CREATOR) {
       where.post = { creatorId: userId }; // Específico para Creator do post
     }

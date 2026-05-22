@@ -17,14 +17,13 @@ export class TokensService {
       throw new InternalServerErrorException("ACCESS_EXPIRES_IN não está definido nas variáveis de ambiente");
     }
 
-    // Usa a variável de ambiente diretamente (pode ser string como '15d' ou número em segundos)
     const expiresIn = process.env.ACCESS_EXPIRES_IN;
-    const accessToken = this.jwtService.sign(payload, { expiresIn: expiresIn as any });
-    return accessToken;
+    const signOptions: any = { expiresIn };
+    return this.jwtService.sign(payload as any, signOptions);
   }
 
   async issueRefreshToken(sessionId: string) {
-    const token = await this.tokenHelper.generateOpaqueToken(48);
+    const token = this.tokenHelper.generateOpaqueToken(48);
     const expires = new Date();
 
     if (!process.env.REFRESH_EXPIRES_DAYS) {
@@ -43,14 +42,13 @@ export class TokensService {
   }
 
   async refreshTokens(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
-    // Encontrar sessão com refresh token válido
     const sessions = await this.prisma.deviceSession.findMany({
       where: {
         refreshExpiresAt: { gt: new Date() },
       },
     });
 
-    let validSession = null;
+    let validSession: (typeof sessions)[number] | null = null;
     for (const session of sessions) {
       if (session.refreshTokenHash && (await this.tokenHelper.compareToken(refreshToken, session.refreshTokenHash))) {
         validSession = session;
@@ -62,8 +60,7 @@ export class TokensService {
       throw new UnauthorizedException("Refresh token inválido ou expirado");
     }
 
-    // Gerar novos tokens
-    const newAccessToken = await this.signAccessToken(validSession.userId, validSession.id);
+    const newAccessToken = this.signAccessToken(validSession.userId, validSession.id);
     const newRefreshToken = await this.issueRefreshToken(validSession.id);
 
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };

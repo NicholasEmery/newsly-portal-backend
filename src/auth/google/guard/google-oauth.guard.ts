@@ -12,22 +12,28 @@ export class GoogleOauthGuard extends AuthGuard("google") {
   }
 
   // Sobrescreve para tratamento personalizado de erros e sucesso
-  handleRequest(
-    err: Error | null,
-    user: { email?: string; id?: string } | false | null,
-    _info: unknown,
-    _context: ExecutionContext,
-  ): { email?: string; id?: string } {
+  // Assinatura genérica para compatibilidade com IAuthGuard
+  handleRequest<TUser = any>(
+    err: any,
+    user: TUser | false | null,
+    _info?: any,
+    _context?: ExecutionContext,
+    _status?: any,
+  ): TUser {
     if (err) {
-      this.logger.error(`Erro na autenticação Google OAuth: ${err.message}`, err.stack);
+      this.logger.error(`Erro na autenticação Google OAuth: ${err?.message ?? String(err)}`, err?.stack);
       throw new UnauthorizedException("Falha na autenticação com Google.");
     }
     if (!user) {
       this.logger.warn("Usuário não encontrado ou token inválido na autenticação Google.");
       throw new UnauthorizedException("Usuário não autorizado.");
     }
-    this.logger.log(`Autenticação Google bem-sucedida para usuário: ${user.email || user.id}`);
+    // Log genérico: tenta extrair campos conhecidos se presentes
+    try {
+      const maybe = user as unknown as { email?: string; id?: string };
+      this.logger.log(`Autenticação Google bem-sucedida para usuário: ${maybe.email || maybe.id}`);
+    } catch {}
 
-    return user;
+    return user as TUser;
   }
 }

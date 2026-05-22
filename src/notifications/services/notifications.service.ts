@@ -1,5 +1,6 @@
-import { NotificationType, Role } from "@generated/prisma/enums";
+import { NotificationType } from "@generated/prisma/enums";
 import { Injectable, ForbiddenException } from "@nestjs/common";
+import type { Notification } from "@generated/prisma/client";
 import { PrismaService } from "../../database/prisma.service";
 import { CreateNotificationDto } from "../admin/create-notifications/dto/create-notification.dto";
 
@@ -7,7 +8,7 @@ import { CreateNotificationDto } from "../admin/create-notifications/dto/create-
 export class NotificationsService {
   constructor(private prisma: PrismaService) {}
 
-  async createNotification(adminId: string, notificationInfo: CreateNotificationDto) {
+  async createNotification(adminId: string, notificationInfo: CreateNotificationDto): Promise<Notification> {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 5); // Default 5 days expiry
 
@@ -66,7 +67,12 @@ export class NotificationsService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     const readNotifications = user?.readNotifications ?? [];
 
-    const where: any = {
+    const where: {
+      expiresAt: { gt: Date };
+      OR: Array<{ recipientsType: NotificationType } | { recipients: { has: string } }>;
+      createdAt?: { gt: Date };
+      id?: { notIn: string[] };
+    } = {
       expiresAt: { gt: new Date() },
       OR: [{ recipientsType: NotificationType.ALL }, { recipients: { has: userId } }],
     };
@@ -133,7 +139,7 @@ export class NotificationsService {
 
     const recipients = [post.creatorId, ...post.collaborators.map((c) => c.userId)];
 
-    const notification = await this.prisma.notification.create({
+    await this.prisma.notification.create({
       data: {
         title: "Novo post publicado",
         body: `O post "${post.title}" foi publicado.`,
@@ -143,8 +149,5 @@ export class NotificationsService {
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       },
     });
-
-    // No per-user Notification model exists in schema; recipients are stored
-    // on the Notification record itself (field `recipients`).
   }
 }

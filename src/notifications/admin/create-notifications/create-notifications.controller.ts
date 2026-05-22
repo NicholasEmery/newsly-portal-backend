@@ -5,6 +5,7 @@ import { Roles } from "../../../common/decorators/roles.decorator";
 import { AuthGuard } from "../../../common/guards/auth.guard";
 import { RolesGuard } from "../../../common/guards/roles.guard";
 import { AuthenticatedRequest } from "../../../common/interfaces/auth.interface";
+import type { Notification } from "@generated/prisma/client";
 
 @Controller("notifications")
 @UseGuards(AuthGuard, RolesGuard)
@@ -13,7 +14,7 @@ export class CreateNotificationsController {
 
   @Post()
   @Roles("ADMIN")
-  async create(@Request() req: AuthenticatedRequest, @Body() dto: CreateNotificationDto) {
+  async create(@Request() req: AuthenticatedRequest, @Body() dto: CreateNotificationDto): Promise<Notification> {
     return this.createNotificationsService.createNotification(req.user.id, dto);
   }
 }

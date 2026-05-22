@@ -1,6 +1,6 @@
 // Importações para o serviço de edição de posts
 // Injectable: Decorator para injeção de dependências
-import { PostStatus, Role, RequestStatus, CollaboratorPermission } from "@generated/prisma/enums";
+import { Role, RequestStatus, CollaboratorPermission } from "@generated/prisma/enums";
 import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
 // PrismaService: Acesso ao banco de dados
 import { UpdatePostDto } from "./dto/update-post.dto";
@@ -30,9 +30,10 @@ export class UpdatePostsService {
     const isCollaborator = post.collaborators.some((collab) => collab.userId === userId);
     if (!isCollaborator) throw new ForbiddenException("No permission to request edit");
 
+    const NO_REQUEST = String(CollaboratorPermission.NO_REQUEST_EDITOR);
     const canEditWithoutApproval = post.collaborators.some(
       (collab) =>
-        collab.userId === userId && collab.permissions.includes(CollaboratorPermission.NO_REQUEST_EDITOR as any),
+        collab.userId === userId && Array.isArray(collab.permissions) && collab.permissions.includes(NO_REQUEST),
     );
     if (canEditWithoutApproval) throw new ForbiddenException("User can edit directly");
 
@@ -59,9 +60,10 @@ export class UpdatePostsService {
 
     const isCreator = post.creatorId === userId;
     const isAdmin = (await this.prisma.user.findUnique({ where: { id: userId } }))?.role === Role.ADMIN;
+    const NO_REQUEST_EDITOR = String(CollaboratorPermission.NO_REQUEST_EDITOR);
     const isCollaborator = post.collaborators.some(
       (collab) =>
-        collab.userId === userId && collab.permissions.includes(CollaboratorPermission.NO_REQUEST_EDITOR as any),
+        collab.userId === userId && Array.isArray(collab.permissions) && collab.permissions.includes(NO_REQUEST_EDITOR),
     );
 
     if (!isCreator && !isCollaborator && !isAdmin) {
@@ -89,9 +91,10 @@ export class UpdatePostsService {
     if (!isCreator && !isAdmin) throw new ForbiddenException("No permission to approve");
 
     // Aplica mudanças
+    const changes = request.proposedChanges as Record<string, unknown>;
     await this.prisma.post.update({
       where: { id: request.postId },
-      data: request.proposedChanges as any,
+      data: changes as unknown as Record<string, unknown>,
     });
 
     // Atualiza request
