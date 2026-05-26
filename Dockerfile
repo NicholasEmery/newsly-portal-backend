@@ -51,8 +51,8 @@ FROM base AS hardened
 # Copia os manifests para instalar apenas dependências de produção.
 COPY package.json package-lock.json ./
 
-# Instala apenas dependências de runtime sem executar scripts de instalação.
-RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev --ignore-scripts --no-audit --no-fund --prefer-offline
+# Instala apenas dependências de runtime, mantendo scripts para compilar módulos nativos como bcrypt.
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev --no-audit --no-fund --prefer-offline
 
 # Copia a pasta gerada do Prisma a partir do estágio de build.
 COPY --from=builder --chown=backenduser:backendgroup /backend/generated ./generated
