@@ -1,39 +1,67 @@
-FROM node:26-alpine AS builder
-WORKDIR /app
+# Define a imagem base Node.js usada em todos os estágios.
+ARG NODE_BASE=node:26-alpine
 
-# Copia arquivos de dependências
-COPY package*.json ./
-RUN npm ci
+# Estágio 1: instala dependências de desenvolvimento, gera o client do Prisma e compila a aplicação Nest.
+FROM ${NODE_BASE} AS builder
 
-# Copia o restante do código
-COPY . .
+# Define o diretório de trabalho do backend no container.
+WORKDIR /backend
 
-# Copia o .env para dentro da imagem (precisa estar no contexto)
-COPY .env .env
+# Copia os manifests para aproveitar o cache do npm.
+COPY package.json package-lock.json ./
 
-# Carrega variáveis do .env e roda prisma generate
-RUN export $(cat .env | xargs) && \
-    echo ">>> DATABASE_URL=$DATABASE_URL" && \
-    npx prisma generate || (echo ">>> ERRO no prisma generate" && exit 1)
+# Instala dependências de desenvolvimento necessárias para o Prisma e para o build.
+RUN --mount=type=cache,target=/root/.npm npm ci --include=dev --no-audit --no-fund --prefer-offline
 
-# Compila a aplicação
-RUN npm run build
-
-# ---------------------------
-# Runtime image
-# ---------------------------
-FROM node:26-alpine AS runner
-WORKDIR /app
-
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
+# Copia o schema e a configuração do Prisma para o estágio de geração.
 COPY prisma ./prisma
 
-USER appuser
+# Copia a configuração do TypeScript e do Nest para o build da aplicação.
+COPY tsconfig*.json nest-cli.json ./
 
-CMD echo ">>> DATABASE_URL no runtime: $DATABASE_URL" && \
-    npx prisma generate && \
-    node dist/main.js
+# Copia o código-fonte da aplicação Nest.
+COPY src ./src
+
+# Lê o .env montado como segredo de build e expõe as variáveis apenas durante a geração.
+RUN --mount=type=secret,id=dotenv,required=true sh -c 'set -a && . /run/secrets/dotenv && set +a && npx prisma generate --schema=prisma/schema.prisma'
+
+# Compila a aplicação para o diretório dist.
+RUN npm run build
+
+# Estágio 3: cria uma base mínima comum para a imagem final.
+FROM ${NODE_BASE} AS base
+
+# Define o ambiente como produção.
+ENV NODE_ENV=production
+
+# Desativa a telemetria do Prisma no container.
+ENV PRISMA_HIDE_UPDATE_MESSAGE=1
+
+# Define o diretório de trabalho do backend no container.
+WORKDIR /backend
+
+# Instala certificados CA e cria um usuário não-root com UID/GID fixos.
+RUN apk add --no-cache ca-certificates \
+	&& addgroup -S -g 10001 backendgroup \
+	&& adduser -S -D -H -u 10001 -G backendgroup backenduser
+
+# Estágio 4: monta a imagem endurecida com somente o necessário para executar.
+FROM base AS hardened
+
+# Copia os manifests para instalar apenas dependências de produção.
+COPY package.json package-lock.json ./
+
+# Instala apenas dependências de runtime sem executar scripts de instalação.
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev --ignore-scripts --no-audit --no-fund --prefer-offline
+
+# Copia a pasta gerada do Prisma a partir do estágio de build.
+COPY --from=builder --chown=backenduser:backendgroup /backend/generated ./generated
+
+# Copia o resultado compilado do Nest a partir do estágio de build.
+COPY --from=builder --chown=backenduser:backendgroup /backend/dist ./dist
+
+# Troca para o usuário não-root antes de iniciar a aplicação.
+USER backenduser
+
+# Inicia a aplicação compilada no entrypoint padrão do Nest.
+CMD ["node", "dist/src/main.js"]
