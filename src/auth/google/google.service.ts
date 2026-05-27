@@ -8,6 +8,7 @@ import { UserGoogleDto } from "./dto/userGoogle.dto";
 import { SessionDto } from "../dto/session.dto";
 import { TokensService } from "../tokens.service";
 import { TokenHelper } from "../util/generateTokens";
+import { resolveFrontendUrl } from "src/common/config/environment";
 
 type GoogleLinkCachePayload = {
   userId: string;
@@ -155,7 +156,7 @@ export class GoogleService {
     await this.emailService.sendEmail(user.email, "Confirme vinculação do Google", "google-link", {
       token,
       userName: user.name,
-      frontendUrl: process.env.FRONTEND_URL,
+      frontendUrl: resolveFrontendUrl(),
     });
 
     return { message: "Email de confirmação enviado." };

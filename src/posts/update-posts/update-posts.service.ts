@@ -30,10 +30,11 @@ export class UpdatePostsService {
     const isCollaborator = post.collaborators.some((collab) => collab.userId === userId);
     if (!isCollaborator) throw new ForbiddenException("No permission to request edit");
 
-    const NO_REQUEST = String(CollaboratorPermission.NO_REQUEST_EDITOR);
     const canEditWithoutApproval = post.collaborators.some(
       (collab) =>
-        collab.userId === userId && Array.isArray(collab.permissions) && collab.permissions.includes(NO_REQUEST),
+        collab.userId === userId &&
+        Array.isArray(collab.permissions) &&
+        collab.permissions.includes(CollaboratorPermission.NO_REQUEST_EDITOR),
     );
     if (canEditWithoutApproval) throw new ForbiddenException("User can edit directly");
 
@@ -60,10 +61,11 @@ export class UpdatePostsService {
 
     const isCreator = post.creatorId === userId;
     const isAdmin = (await this.prisma.user.findUnique({ where: { id: userId } }))?.role === Role.ADMIN;
-    const NO_REQUEST_EDITOR = String(CollaboratorPermission.NO_REQUEST_EDITOR);
     const isCollaborator = post.collaborators.some(
       (collab) =>
-        collab.userId === userId && Array.isArray(collab.permissions) && collab.permissions.includes(NO_REQUEST_EDITOR),
+        collab.userId === userId &&
+        Array.isArray(collab.permissions) &&
+        collab.permissions.includes(CollaboratorPermission.NO_REQUEST_EDITOR),
     );
 
     if (!isCreator && !isCollaborator && !isAdmin) {

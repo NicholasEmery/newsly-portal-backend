@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { Profile, Strategy } from "passport-google-oauth20";
 
@@ -42,7 +42,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, "google") {
     if (!this.enabled) {
       // Se a estratégia está desabilitada, não processar validação
       this.logger?.warn("Google strategy validate called but strategy is disabled");
-      return null as any;
+      return null;
     }
     const email = profile.emails?.[0]?.value;
 

@@ -11,6 +11,7 @@ import { NestFactory } from "@nestjs/core";
 // Swagger: Para documentação da API
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
+import { isAllowedFrontendOrigin } from "./common/config/environment";
 
 // Função bootstrap:Inicializa e configura a aplicação NestJS
 // Lógica: Cria app, configura validação, Swagger, e inicia servidor
@@ -20,11 +21,27 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // Obtém ConfigService para variáveis de ambiente
   const configService = app.get(ConfigService);
+  const corsOrigin = (
+    origin: string | undefined,
+    callback: (error: Error | null, allow?: boolean) => void,
+  ): void => {
+    if (isAllowedFrontendOrigin(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`Origin not allowed: ${origin ?? "unknown"}`), false);
+  };
 
   // Ativa validação global: Remove campos não whitelist, rejeita inválidos
   // whitelist: true - remove campos não definidos no DTO
   // forbidNonWhitelisted: true - lança erro se campo extra
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
+
+  app.enableCors({
+    credentials: true,
+    origin: corsOrigin,
+  });
 
   // Configura Swagger para documentação da API
   // DocumentBuilder: Constrói config do Swagger
@@ -44,13 +61,13 @@ async function bootstrap() {
     },
   });
 
-  // Obtém porta do ambiente, padrão 3001
-  const port = configService.get<string>("PORT");
+  // Obtém porta do ambiente
+  const port = configService.get<string>("BACKEND_PORT");
   if (!port) {
-    console.warn("PORT environment variable is not set. Using default port 3333.");
+    console.warn("BACKEND_PORT environment variable is not set.");
   }
   // Inicia servidor na porta especificada
-  await app.listen(port ? Number(port) : 3333);
+  await app.listen(Number(port));
 }
 // Chama bootstrap para iniciar a app
 void bootstrap().catch((error: unknown) => {

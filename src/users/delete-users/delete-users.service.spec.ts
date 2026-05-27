@@ -5,6 +5,7 @@ import { PrismaService } from "../../database/prisma.service";
 describe("DeleteUsersService", () => {
   let service: DeleteUsersService;
   let prisma: PrismaService;
+  type DeletedUser = Awaited<ReturnType<typeof prisma.user.delete>>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -15,7 +16,7 @@ describe("DeleteUsersService", () => {
   });
 
   it("should delete a user", async () => {
-    jest.spyOn(prisma.user, "delete").mockResolvedValue({
+    const deletedUser: DeletedUser = {
       id: "1",
       name: "Test",
       email: "test@example.com",
@@ -27,7 +28,9 @@ describe("DeleteUsersService", () => {
       createQuota: null,
       createQuotaExpiresAt: null,
       readNotifications: [],
-    } as unknown);
+    };
+
+    jest.spyOn(prisma.user, "delete").mockResolvedValue(deletedUser);
     await expect(service.deleteUser("1")).resolves.toBeUndefined();
   });
 });

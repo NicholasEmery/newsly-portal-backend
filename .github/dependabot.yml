@@ -15,41 +15,57 @@ updates:
       - "dependencies"
       - "automated"
     groups:
-      backend-frameworks:
+      nest-and-platform:
         patterns:
-          - "express*"
           - "@nestjs/*"
           - "nestjs*"
-      security-and-auth:
+          - "reflect-metadata"
+          - "rxjs"
+      database-and-prisma:
         patterns:
-          - "jsonwebtoken"
-          - "bcryptjs"
-          - "helmet"
-          - "cookie-parser"
-      db-and-cache:
-        patterns:
-          - "mongoose*"
-          - "pg"
-          - "mysql"
+          - "prisma"
+          - "@prisma/client"
           - "redis"
+          - "cache-manager-redis-store"
+      auth-and-security:
+        patterns:
+          - "passport*"
+          - "@nestjs/jwt"
+          - "@nestjs/passport"
+          - "bcrypt"
+          - "cookie-parser"
+          - "passport-google-oauth20"
+          - "passport-jwt"
+          - "passport-local"
+      validation-and-serialization:
+        patterns:
+          - "class-validator"
+          - "class-transformer"
+          - "swagger-ui-express"
+          - "@nestjs/swagger"
+      testing-and-linting:
+        patterns:
+          - "eslint*"
+          - "prettier"
+          - "jest*"
+          - "ts-jest"
+          - "supertest"
+      types-and-tooling:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "ts-node"
+          - "ts-loader"
+          - "tsconfig-paths"
+          - "source-map-support"
+          - "@nestjs/cli"
+          - "@nestjs/testing"
       utilities:
         patterns:
           - "dotenv"
-          - "cors"
-          - "validator"
+          - "axios"
           - "multer"
           - "nodemailer"
-          - "sharp"
-          - "uuid"
-      logging-and-dev:
-        patterns:
-          - "nodemon"
-          - "morgan"
-          - "winston"
-          - "express-validator"
-      aws-and-cloud:
-        patterns:
-          - "aws-sdk"
     rebase-strategy: "auto"
-  
+
 

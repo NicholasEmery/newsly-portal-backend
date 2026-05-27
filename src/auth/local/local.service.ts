@@ -9,6 +9,7 @@ import { UserLocalSignInDto } from "./dto/local-signin.dto";
 import { UserLocalSignUpDto } from "./dto/local-signup.dto";
 import { SessionDto } from "../dto/session.dto";
 import { TokenHelper } from "../util/generateTokens";
+import { resolveFrontendUrl } from "src/common/config/environment";
 
 type LocalSignupCachePayload = {
   localUser: UserLocalSignUpDto;
@@ -130,7 +131,7 @@ export class LocalService {
     await this.emailService.sendEmail(localUser.email, "Verifique seu email", "verify-email", {
       token,
       userName: `${localUser.firstName} ${localUser.lastName}`,
-      frontendUrl: process.env.FRONTEND_URL,
+      frontendUrl: resolveFrontendUrl(),
     });
 
     return { message: "Email de verificação enviado." };
@@ -185,7 +186,7 @@ export class LocalService {
     await this.emailService.sendEmail(email, "Redefinição de senha", "reset-password", {
       token,
       userName: user.name,
-      frontendUrl: process.env.FRONTEND_URL,
+      frontendUrl: resolveFrontendUrl(),
     });
 
     return true;

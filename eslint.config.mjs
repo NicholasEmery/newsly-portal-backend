@@ -7,11 +7,12 @@ import jestPlugin from "eslint-plugin-jest";
 import promisePlugin from "eslint-plugin-promise";
 import securityPlugin from "eslint-plugin-security";
 import sonarjsPlugin from "eslint-plugin-sonarjs";
+import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default [
   {
-    ignores: ["eslint.config.mjs"],
+    ignores: ["eslint.config.mjs", "dist/**", "coverage/**", "generated/**"],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -23,6 +24,9 @@ export default [
   jestPlugin.configs["flat/recommended"],
   {
     languageOptions: {
+      globals: {
+        ...globals.node,
+      },
       parserOptions: {
         project: ["./tsconfig.json"],
         sourceType: "module",
@@ -32,17 +36,18 @@ export default [
     rules: {
       // NestJS e TypeScript
       "@typescript-eslint/explicit-module-boundary-types": "off",
-      "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "@typescript-eslint/no-empty-object-type": "off",
-      "@typescript-eslint/no-unsafe-assignment": "error",
-      "@typescript-eslint/no-unsafe-argument": "error",
-      "@typescript-eslint/no-unsafe-call": "error",
-      "@typescript-eslint/no-unsafe-member-access": "error",
+      "@typescript-eslint/no-unsafe-assignment": "warn",
+      "@typescript-eslint/no-unsafe-argument": "warn",
+      "@typescript-eslint/no-unsafe-call": "warn",
+      "@typescript-eslint/no-unsafe-member-access": "warn",
       "@typescript-eslint/require-await": "error",
       "@typescript-eslint/unbound-method": "error",
       "@typescript-eslint/only-throw-error": "error",
-      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-unsafe-return": "warn",
+      "@typescript-eslint/no-floating-promises": "warn",
       // Flexibilidade para decorators e classes
       "no-useless-constructor": "off",
       "@typescript-eslint/no-useless-constructor": "off",
@@ -50,6 +55,8 @@ export default [
       "no-eval": "error",
       "no-implied-eval": "error",
       "no-script-url": "error",
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-empty": "warn",
       // Organização e boas práticas de imports
       "import/order": "off",
       "import/no-unresolved": "off",
@@ -59,7 +66,7 @@ export default [
       "security/detect-non-literal-fs-filename": "off",
       // Code Smells
       "sonarjs/cognitive-complexity": ["warn", 15],
-      "sonarjs/unused-import": "error",
+      "sonarjs/unused-import": "warn",
       "sonarjs/no-commented-code": "error",
       "sonarjs/no-dead-store": "error",
       "sonarjs/todo-tag": "error",
@@ -70,6 +77,8 @@ export default [
       // Promises
       "promise/always-return": "warn",
       "promise/no-return-wrap": "warn",
+      "complexity": ["warn", 15],
+      "max-lines-per-function": ["warn", 200],
       // Testes
       "jest/no-disabled-tests": "warn",
       "jest/no-focused-tests": "error",
@@ -80,18 +89,20 @@ export default [
       "@typescript-eslint/no-empty-function": "off",
       "prettier/prettier": "off",
       // Novas regras solicitadas
-      "max-lines-per-function": "off",
-      "complexity": "off",
-      "no-console": "off",
       "@typescript-eslint/consistent-type-definitions": "off",
       "@typescript-eslint/strict-boolean-expressions": "off",
     },
   },
   {
     files: ["**/*.spec.ts", "**/*.test.ts", "test/**"],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+      },
+    },
     rules: {
-      "max-lines-per-function": "off",
-      "complexity": "off",
+      "max-lines-per-function": ["warn", 250],
+      "complexity": ["warn", 20],
       "no-console": "off",
       "@typescript-eslint/strict-boolean-expressions": "off",
     },

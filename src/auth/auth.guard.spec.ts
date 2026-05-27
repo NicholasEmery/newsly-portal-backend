@@ -151,19 +151,19 @@ describe("AuthGuard", () => {
   describe("extractTokenFromHeader", () => {
     it("deve extrair o token corretamente do header Bearer", () => {
       const request = { headers: { authorization: "Bearer my-token" } };
-      const token = (guard as GuardWithExtractor).extractTokenFromHeader(request);
+      const token = (guard as unknown as GuardWithExtractor).extractTokenFromHeader(request);
       expect(token).toBe("my-token");
     });
 
     it("deve retornar undefined se o header não for Bearer", () => {
       const request = { headers: { authorization: "Basic my-token" } };
-      const token = (guard as GuardWithExtractor).extractTokenFromHeader(request);
+      const token = (guard as unknown as GuardWithExtractor).extractTokenFromHeader(request);
       expect(token).toBeUndefined();
     });
 
     it("deve retornar undefined se não houver header authorization", () => {
       const request = { headers: {} };
-      const token = (guard as GuardWithExtractor).extractTokenFromHeader(request);
+      const token = (guard as unknown as GuardWithExtractor).extractTokenFromHeader(request);
       expect(token).toBeUndefined();
     });
   });

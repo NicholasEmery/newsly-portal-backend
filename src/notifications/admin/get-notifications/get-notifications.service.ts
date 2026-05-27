@@ -8,6 +8,6 @@ export class AdminGetNotificationsService {
 
   // Para admins, talvez ver todas as notificações ou algo, mas por enquanto similar
   getAllNotifications(_since?: Date, _limit = 20, _onlyUnread = false): Promise<Notification[]> {
-    return [];
+    return Promise.resolve([]);
   }
 }
