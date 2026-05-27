@@ -21,10 +21,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // Obtém ConfigService para variáveis de ambiente
   const configService = app.get(ConfigService);
-  const corsOrigin = (
-    origin: string | undefined,
-    callback: (error: Error | null, allow?: boolean) => void,
-  ): void => {
+  const corsOrigin = (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void): void => {
     if (isAllowedFrontendOrigin(origin)) {
       callback(null, true);
       return;

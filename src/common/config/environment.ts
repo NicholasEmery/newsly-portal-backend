@@ -23,9 +23,7 @@ const resolveTaggedValue = (
 ): string | null => {
   const target = resolveDeploymentTarget();
   const preferredValues =
-    target === "docker"
-      ? [dockerValue, fallbackValue, localValue]
-      : [localValue, fallbackValue, dockerValue];
+    target === "docker" ? [dockerValue, fallbackValue, localValue] : [localValue, fallbackValue, dockerValue];
 
   for (const value of preferredValues) {
     const normalized = normalizeValue(value);
@@ -47,11 +45,7 @@ export const isAllowedFrontendOrigin = (origin?: string | null): boolean => {
 
   try {
     const parsed = new URL(origin);
-    if (
-      parsed.hostname === "localhost" ||
-      parsed.hostname === "127.0.0.1" ||
-      parsed.hostname.endsWith(".local")
-    ) {
+    if (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname.endsWith(".local")) {
       return true;
     }
 
