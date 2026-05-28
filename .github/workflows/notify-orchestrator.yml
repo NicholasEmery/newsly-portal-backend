@@ -10,10 +10,10 @@ permissions:
 
 jobs:
   notify:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Call orchestrator repository_dispatch
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
         env:
           ORCHESTRATOR_REPO: "NicholasEmery/newsly-portal-orchestrator"
           GH_TOKEN: ${{ secrets.ORCHESTRATOR_PAT }}
@@ -28,3 +28,121 @@ jobs:
             -H "Authorization: Bearer $GH_TOKEN" \
             https://api.github.com/repos/$ORCHESTRATOR_REPO/dispatches \
             -d "$payload"
+
+      - name: Send Telegram deployment notification
+        if: ${{ github.event.workflow_run.conclusion != 'success' }}
+        uses: actions/github-script@v7
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const run = context.payload.workflow_run;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const workflowName = run.name || "CI";
+            const serviceName = workflowName.includes("Backend") ? "Backend" : workflowName;
+
+            const status = run.conclusion || "unknown";
+            const statusLabel = {
+              success: "foi concluído com sucesso",
+              failure: "falhou",
+              cancelled: "foi cancelado",
+              timed_out: "expirou",
+              action_required: "precisa de ação manual",
+              stale: "ficou obsoleto",
+              neutral: "terminou com aviso",
+              skipped: "foi pulado",
+              unknown: "terminou com status desconhecido",
+            }[status] || `terminou com status ${status}`;
+
+            const escapeHtml = (value) => String(value ?? "")
+              .replaceAll("&", "&amp;")
+              .replaceAll("<", "&lt;")
+              .replaceAll(">", "&gt;")
+              .replaceAll('"', "&quot;")
+              .replaceAll("'", "&#39;");
+
+            const truncate = (value, maxLength) => {
+              const text = String(value ?? "");
+              return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+            };
+
+            let commitData = null;
+            try {
+              const commitResponse = await github.rest.repos.getCommit({ owner, repo, ref: run.head_sha });
+              commitData = commitResponse.data;
+            } catch (error) {
+              console.warn(`Unable to read commit ${run.head_sha}: ${error.message}`);
+            }
+
+            if (!commitData) {
+              const fallbackBranch = run.head_branch || "main";
+              const fallbackCommits = await github.rest.repos.listCommits({ owner, repo, sha: fallbackBranch, per_page: 1 });
+              commitData = fallbackCommits.data[0] ?? null;
+            }
+
+            if (!commitData) {
+              console.warn("No commit data found for deployment notification");
+              return;
+            }
+
+            const runJobs = await github.rest.actions.listJobsForWorkflowRun({ owner, repo, run_id: run.id, per_page: 100 });
+
+            const failedJobs = runJobs.data.jobs
+              .filter((job) => job.conclusion && job.conclusion !== "success" && job.conclusion !== "skipped")
+              .map((job) => {
+                const failedStep = (job.steps || []).find((step) => step.conclusion && step.conclusion !== "success");
+                const stepText = failedStep ? ` etapa "${failedStep.name}" (${failedStep.conclusion})` : "";
+                return `${job.name}${stepText}`;
+              });
+
+            const warningJobs = runJobs.data.jobs
+              .filter((job) => job.conclusion === "neutral")
+              .map((job) => job.name);
+
+            const commitSha = commitData.sha || run.head_sha || "unknown";
+            const commitLines = String(commitData.commit?.message || run.display_title || "Commit sem mensagem").split(/\r?\n/);
+            const commitMessage = truncate(commitLines[0] || "Commit sem mensagem", 180);
+            const commitBody = truncate(commitLines.slice(1).join("\n").trim(), 700);
+            const commitAuthor = commitData.commit?.author?.name || commitData.commit?.committer?.name || "Autor desconhecido";
+            const branchName = run.head_branch || "main";
+
+            const lines = [
+              `<b>Deploy do ${escapeHtml(serviceName)} ${escapeHtml(statusLabel)}.</b>`,
+              `<b>Workflow:</b> ${escapeHtml(workflowName)}`,
+              `<b>Run:</b> <a href="${escapeHtml(run.html_url)}">#${escapeHtml(run.run_number)}</a>`,
+              `<b>Commit:</b> <code>${escapeHtml(commitSha)}</code>`,
+              `<b>Autor:</b> ${escapeHtml(commitAuthor)}`,
+              `<b>Mensagem:</b> ${escapeHtml(commitMessage)}`,
+            ];
+
+            if (commitBody) {
+              lines.push(`<b>Descrição:</b> ${escapeHtml(commitBody)}`);
+            }
+
+            lines.push(`<b>Branch:</b> ${escapeHtml(branchName)}`);
+            lines.push(`<b>Status:</b> ${escapeHtml(status)}`);
+
+            if (failedJobs.length > 0) {
+              lines.push(`<b>Diagnóstico:</b> ${escapeHtml(failedJobs.slice(0, 3).join("; "))}`);
+            } else if (warningJobs.length > 0) {
+              lines.push(`<b>Avisos:</b> ${escapeHtml(warningJobs.slice(0, 3).join("; "))}`);
+            }
+
+            const message = lines.join("\n");
+            const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
+            const telegramChatId = process.env.TELEGRAM_CHAT_ID;
+
+            if (!telegramToken || !telegramChatId) {
+              console.warn("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are required to send Telegram notification");
+              return;
+            }
+
+            await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+              body: new URLSearchParams({ chat_id: telegramChatId, parse_mode: "HTML", text: message }),
+            });
