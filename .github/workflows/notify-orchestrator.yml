@@ -110,27 +110,29 @@ jobs:
             const commitAuthor = commitData.commit?.author?.name || commitData.commit?.committer?.name || "Autor desconhecido";
             const branchName = run.head_branch || "main";
 
+            const now = new Date().toISOString();
+
             const lines = [
-              `<b>Deploy do ${escapeHtml(serviceName)} ${escapeHtml(statusLabel)}.</b>`,
+              `<b>Newsly — Deploy ${escapeHtml(serviceName)}: ${escapeHtml(statusLabel)}</b>`,
+              `<b>Repositório:</b> ${escapeHtml(owner)}/${escapeHtml(repo)}`,
               `<b>Workflow:</b> ${escapeHtml(workflowName)}`,
               `<b>Run:</b> <a href="${escapeHtml(run.html_url)}">#${escapeHtml(run.run_number)}</a>`,
-              `<b>Commit:</b> <code>${escapeHtml(commitSha)}</code>`,
+              `<b>Commit:</b> <a href=\"https://github.com/${escapeHtml(owner)}/${escapeHtml(repo)}/commit/${escapeHtml(commitSha)}\"><code>${escapeHtml(commitSha.slice(0,7))}</code></a> — ${escapeHtml(commitMessage)}`,
               `<b>Autor:</b> ${escapeHtml(commitAuthor)}`,
-              `<b>Mensagem:</b> ${escapeHtml(commitMessage)}`,
+              `<b>Branch:</b> ${escapeHtml(branchName)}`,
             ];
 
             if (commitBody) {
-              lines.push(`<b>Descrição:</b> ${escapeHtml(commitBody)}`);
+              lines.push(`<b>Detalhes:</b> ${escapeHtml(commitBody)}`);
             }
-
-            lines.push(`<b>Branch:</b> ${escapeHtml(branchName)}`);
-            lines.push(`<b>Status:</b> ${escapeHtml(status)}`);
 
             if (failedJobs.length > 0) {
               lines.push(`<b>Diagnóstico:</b> ${escapeHtml(failedJobs.slice(0, 3).join("; "))}`);
             } else if (warningJobs.length > 0) {
               lines.push(`<b>Avisos:</b> ${escapeHtml(warningJobs.slice(0, 3).join("; "))}`);
             }
+
+            lines.push(`<b>Hora:</b> ${escapeHtml(now)}`);
 
             const message = lines.join("\n");
             const telegramToken = process.env.TELEGRAM_BOT_TOKEN;

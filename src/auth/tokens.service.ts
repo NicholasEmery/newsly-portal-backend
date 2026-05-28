@@ -18,8 +18,11 @@ export class TokensService {
     }
 
     const expiresIn = process.env.ACCESS_EXPIRES_IN;
-    const signOptions: any = { expiresIn };
-    return this.jwtService.sign(payload as any, signOptions);
+    const signOptions: Record<string, unknown> = { expiresIn };
+    return this.jwtService.sign(
+      payload as unknown as Record<string, unknown>,
+      signOptions as unknown as Record<string, unknown>,
+    );
   }
 
   async issueRefreshToken(sessionId: string) {

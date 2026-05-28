@@ -39,7 +39,7 @@ const mockPath = path as jest.Mocked<typeof path>;
 
 describe("UploadsService", () => {
   let service: UploadsService;
-  type AxiosGetCall = [string, { responseType: "arraybuffer"; timeout: number }];
+  let service: UploadsService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

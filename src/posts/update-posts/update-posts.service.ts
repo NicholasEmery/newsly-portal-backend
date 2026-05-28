@@ -44,7 +44,7 @@ export class UpdatePostsService {
         postId,
         requesterId: userId,
         targetRole: Role.CREATOR,
-        proposedChanges: JSON.parse(JSON.stringify(dto)),
+        proposedChanges: JSON.parse(JSON.stringify(dto)) as unknown as Record<string, unknown>,
       },
     });
   }
@@ -72,9 +72,10 @@ export class UpdatePostsService {
       throw new ForbiddenException("No permission to edit");
     }
 
+    const safeDto = JSON.parse(JSON.stringify(dto)) as unknown as Record<string, unknown>;
     return this.prisma.post.update({
       where: { id: postId },
-      data: dto,
+      data: safeDto,
     });
   }
 

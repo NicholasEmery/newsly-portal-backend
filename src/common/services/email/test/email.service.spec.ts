@@ -24,7 +24,6 @@ describe("EmailService", () => {
   let service: EmailService;
   const sendMail = jest.fn();
   const mockTransporter = { sendMail };
-  type ReadFileCall = [string, BufferEncoding];
 
   beforeEach(async () => {
     mockNodemailer.createTransport.mockReturnValue(mockTransporter as never);

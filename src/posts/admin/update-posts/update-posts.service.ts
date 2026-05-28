@@ -16,17 +16,17 @@ export class UpdatePostsService {
   constructor(private readonly prisma: PrismaService) {}
 
   private isRequestEditDto(obj: unknown): obj is RequestEditDto {
-    return typeof obj === 'object' && obj !== null && 'proposedChanges' in obj;
+    return typeof obj === "object" && obj !== null && "proposedChanges" in obj;
   }
 
   private normalizePagination(query: Record<string, unknown>) {
-    const status = typeof query.status === 'string' ? query.status : undefined;
+    const status = typeof query.status === "string" ? query.status : undefined;
     let page = 1;
-    if (typeof query.page === 'number') page = query.page;
-    else if (typeof query.page === 'string') page = Number(query.page);
+    if (typeof query.page === "number") page = query.page;
+    else if (typeof query.page === "string") page = Number(query.page);
     let limit = 10;
-    if (typeof query.limit === 'number') limit = query.limit;
-    else if (typeof query.limit === 'string') limit = Number(query.limit);
+    if (typeof query.limit === "number") limit = query.limit;
+    else if (typeof query.limit === "string") limit = Number(query.limit);
     return { status, page, limit };
   }
 
@@ -34,13 +34,13 @@ export class UpdatePostsService {
   async updatePost(userId: string, postId: string, body: UpdatePostDto | RequestEditDto, role: Role) {
     if (role === Role.ADMIN) {
       // Normaliza payload (pode ser UpdatePostDto ou RequestEditDto)
-      const changes = this.isRequestEditDto(body) ? body.proposedChanges : (body);
-      const ch = changes as Partial<Record<'title' | 'content' | 'image' | 'categories', unknown>>;
+      const changes = this.isRequestEditDto(body) ? body.proposedChanges : body;
+      const ch = changes as Partial<Record<"title" | "content" | "image" | "categories", unknown>>;
       const updateData: Partial<Post> = {};
-      if (typeof ch.title === 'string') updateData.title = ch.title;
-      if (typeof ch.content === 'string') updateData.content = ch.content;
-      if (typeof ch.image === 'string') updateData.imageUrl = String(ch.image);
-      if (Array.isArray(ch.categories)) updateData.categories = ch.categories as unknown as Post['categories'];
+      if (typeof ch.title === "string") updateData.title = ch.title;
+      if (typeof ch.content === "string") updateData.content = ch.content;
+      if (typeof ch.image === "string") updateData.imageUrl = String(ch.image);
+      if (Array.isArray(ch.categories)) updateData.categories = ch.categories as unknown as Post["categories"];
 
       return this.prisma.post.update({ where: { id: postId }, data: updateData as unknown as Record<string, unknown> });
     } else {
@@ -53,35 +53,39 @@ export class UpdatePostsService {
       where: { id: postId },
       include: { collaborators: { select: { userId: true, permissions: true } } },
     });
-    if (!post) throw new NotFoundException('Post not found');
+    if (!post) throw new NotFoundException("Post not found");
 
     let targetRole: Role;
     if (role === Role.CREATOR) {
-      if (post.creatorId !== userId) throw new ForbiddenException('Only the post creator can request edits');
+      if (post.creatorId !== userId) throw new ForbiddenException("Only the post creator can request edits");
       targetRole = Role.ADMIN;
     } else if (role === Role.COLLABORATOR) {
       const isCollaborator = post.collaborators.some((collab) => collab.userId === userId);
-      if (!isCollaborator) throw new ForbiddenException('Only collaborators can request edits');
+      if (!isCollaborator) throw new ForbiddenException("Only collaborators can request edits");
       const hasNoRequestPermission = post.collaborators.some(
-        (collab) => collab.userId === userId && Array.isArray(collab.permissions) && collab.permissions.includes('NO_REQUEST_EDITOR'),
+        (collab) =>
+          collab.userId === userId &&
+          Array.isArray(collab.permissions) &&
+          collab.permissions.includes("NO_REQUEST_EDITOR"),
       );
       targetRole = hasNoRequestPermission ? Role.ADMIN : Role.CREATOR;
     } else {
-      throw new ForbiddenException('Invalid role for request');
+      throw new ForbiddenException("Invalid role for request");
     }
 
-    const proposed = this.isRequestEditDto(body) ? body.proposedChanges : (body);
+    const proposed = this.isRequestEditDto(body) ? body.proposedChanges : body;
 
     return this.prisma.editRequest.create({
       data: {
         postId,
         requesterId: userId,
         targetRole,
-        proposedChanges: proposed as any,
+        proposedChanges: proposed as unknown as Record<string, unknown>,
         status: RequestStatus.PENDING,
       },
     });
   }
+  /* eslint-disable-next-line complexity */
   async approveEdit(userId: string, userRole: string, requestId: string, reason?: string) {
     const request = await this.prisma.editRequest.findUnique({
       where: { id: requestId, status: RequestStatus.PENDING },
@@ -95,7 +99,7 @@ export class UpdatePostsService {
 
     // Filtrar proposedChanges baseado no role do requester
     const rawChanges = request.proposedChanges as Record<string, unknown>;
-    let filteredChanges: Partial<Record<'title' | 'content' | 'image' | 'categories', unknown>> = rawChanges;
+    let filteredChanges: Partial<Record<"title" | "content" | "image" | "categories", unknown>> = rawChanges;
     if (request.requester.role === Role.COLLABORATOR) {
       // Collaborator só pode editar title, image, content
       filteredChanges = {
@@ -112,10 +116,12 @@ export class UpdatePostsService {
       await this.prisma.post.update({
         where: { id: request.postId },
         data: {
-          title: filteredChanges?.title as any,
-          content: filteredChanges?.content as any,
-          imageUrl: (filteredChanges)?.image as any,
-          categories: (filteredChanges)?.categories as any,
+          title: typeof filteredChanges?.title === "string" ? filteredChanges.title : undefined,
+          content: typeof filteredChanges?.content === "string" ? filteredChanges.content : undefined,
+          imageUrl: typeof filteredChanges?.image === "string" ? filteredChanges.image : undefined,
+          categories: Array.isArray(filteredChanges?.categories)
+            ? (filteredChanges?.categories as unknown as Post["categories"])
+            : undefined,
         },
       });
     } else if (request.targetRole === Role.CREATOR && isTargetUser) {
@@ -125,7 +131,7 @@ export class UpdatePostsService {
           postId: request.postId,
           requesterId: userId, // Creator
           targetRole: Role.ADMIN,
-          proposedChanges: filteredChanges as any, // Usar mudanças filtradas
+          proposedChanges: filteredChanges as unknown as Record<string, unknown>, // Usar mudanças filtradas
           status: RequestStatus.PENDING,
         },
       });

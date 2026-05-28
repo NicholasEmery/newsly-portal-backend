@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Cache } from "cache-manager";

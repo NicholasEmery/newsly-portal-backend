@@ -13,15 +13,27 @@ export class GoogleOauthGuard extends AuthGuard("google") {
 
   // Sobrescreve para tratamento personalizado de erros e sucesso
   // Assinatura genérica para compatibilidade com IAuthGuard
-  handleRequest<TUser = any>(
-    err: any,
+  handleRequest<TUser = unknown>(
+    err: unknown,
     user: TUser | false | null,
-    _info?: any,
+    _info?: unknown,
     _context?: ExecutionContext,
-    _status?: any,
+    _status?: unknown,
   ): TUser {
     if (err) {
-      this.logger.error(`Erro na autenticação Google OAuth: ${err?.message ?? String(err)}`, err?.stack);
+      let message = "Unknown error";
+      let stack: string | undefined;
+      if (err instanceof Error) {
+        message = err.message;
+        stack = err.stack;
+      } else {
+        try {
+          message = JSON.stringify(err as unknown);
+        } catch {
+          message = Object.prototype.toString.call(err as unknown);
+        }
+      }
+      this.logger.error(`Erro na autenticação Google OAuth: ${message}`, stack);
       throw new UnauthorizedException("Falha na autenticação com Google.");
     }
     if (!user) {
@@ -29,10 +41,10 @@ export class GoogleOauthGuard extends AuthGuard("google") {
       throw new UnauthorizedException("Usuário não autorizado.");
     }
     // Log genérico: tenta extrair campos conhecidos se presentes
-    try {
-      const maybe = user as unknown as { email?: string; id?: string };
-      this.logger.log(`Autenticação Google bem-sucedida para usuário: ${maybe.email || maybe.id}`);
-    } catch {}
+    const maybe = user && typeof user === "object" ? (user as Record<string, unknown>) : {};
+    const email = typeof maybe.email === "string" ? maybe.email : undefined;
+    const id = typeof maybe.id === "string" ? maybe.id : undefined;
+    if (email || id) this.logger.log(`Autenticação Google bem-sucedida para usuário: ${email || id}`);
 
     return user as TUser;
   }
