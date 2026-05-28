@@ -73,11 +73,9 @@ describe("EmailService", () => {
       await service.sendEmail(to, subject, templateName, data);
 
       const [joinCall] = mockPath.join.mock.calls as unknown as Array<[string, string, string]>;
-      expect(joinCall).toEqual([
-        expect.stringContaining("src\\common\\services\\email"),
-        "templates",
-        `${templateName}.hbs`,
-      ]);
+      expect(joinCall[0]).toMatch(/src[\\/]+common[\\/]+services[\\/]+email/);
+      expect(joinCall[1]).toBe("templates");
+      expect(joinCall[2]).toBe(`${templateName}.hbs`);
       const readFileCall = mockFs.readFileSync.mock.calls[0];
       expect(readFileCall?.[0]).toBe(templatePath);
       expect(readFileCall?.[1]).toBe("utf-8");

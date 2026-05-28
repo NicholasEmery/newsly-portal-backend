@@ -209,6 +209,6 @@ describe("UpdatePostsService", () => {
       },
     });
     expect(creationUpdateArgs.data.reviewedAt).toBeInstanceOf(Date);
-    expect(result).toBeUndefined();
+    expect(result).toBe("post-1");
   });
 });

@@ -110,6 +110,9 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/test/jest.setup.ts"
+    ],
     "moduleNameMapper": {
       "^@generated/(.*)$": "<rootDir>/generated/$1",
       "^src/(.*)$": "<rootDir>/src/$1"
