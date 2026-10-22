@@ -1,33 +1,33 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
 import { Role } from "../../../../generated/prisma/enums";
 
 export class UserLocalSignUpDto {
-  @ApiProperty({ example: "John", description: "Primeiro nome do usuário" })
+  @ApiProperty({ example: "Nicholas", description: "Nome do usuário." })
   @IsString()
   @IsNotEmpty()
   firstName!: string;
 
-  @ApiProperty({ example: "Doe", description: "Sobrenome do usuário" })
+  @ApiProperty({ example: "Emery", description: "Sobrenome do usuário." })
   @IsString()
   @IsNotEmpty()
   lastName!: string;
 
-  @ApiProperty({ example: "user@email.com", description: "Email do usuário" })
+  @ApiProperty({ example: "nicholas@example.com", description: "Email da nova conta." })
   @IsEmail()
   @IsNotEmpty()
   email!: string;
 
-  @ApiProperty({ example: "senha123", minLength: 6, description: "Senha do usuário" })
+  @ApiProperty({ example: "StrongPass123", minLength: 6, description: "Senha inicial da conta." })
   @MinLength(6)
   @IsNotEmpty()
   password!: string;
 
-  @ApiProperty({ type: "string", format: "binary", description: "Foto de perfil do usuário" })
+  @ApiProperty({ type: "string", format: "binary", description: "Foto de perfil enviada como arquivo." })
   @IsNotEmpty()
   photoFile!: Express.Multer.File;
 
-  @ApiProperty({ example: "USER", description: "Papel do usuário" })
+  @ApiPropertyOptional({ enum: Role, example: Role.COLLABORATOR, description: "Role opcional na criação." })
   @IsOptional()
   @IsEnum(Role)
   role?: Role;

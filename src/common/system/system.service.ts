@@ -5,6 +5,24 @@ import { PrismaService } from "../../database/prisma.service";
 export class SystemService {
   constructor(private readonly prisma: PrismaService) {}
 
+  compatibility() {
+    return {
+      service: "newsly-backend",
+      release: {
+        id: process.env.NEWSLY_RELEASE_ID ?? "local",
+        sha: process.env.NEWSLY_RELEASE_SHA ?? "local",
+      },
+      contract: {
+        api: process.env.NEWSLY_API_CONTRACT_VERSION ?? "2026.1",
+        frontend: {
+          minimum: process.env.NEWSLY_FRONTEND_CONTRACT_MIN ?? "2026.1",
+          maximum: process.env.NEWSLY_FRONTEND_CONTRACT_MAX ?? "2026.1",
+        },
+      },
+      timestamp: new Date().toISOString(),
+    };
+  }
+
   checkHealth() {
     return {
       status: "ok",

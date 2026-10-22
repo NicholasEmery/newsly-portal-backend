@@ -5,11 +5,10 @@ import { Module } from "@nestjs/common";
 import { GetNotificationsController } from "./get-notifications.controller";
 // GetNotificationsService: Serviço
 import { GetNotificationsService } from "./get-notifications.service";
-// NotificationsModule: Para injetar o serviço principal
-import { NotificationsModule } from "../notifications.module";
+import { NotificationsCoreModule } from "../notifications-core.module";
 
 @Module({
-  imports: [NotificationsModule],
+  imports: [NotificationsCoreModule],
   controllers: [GetNotificationsController],
   providers: [GetNotificationsService],
   exports: [GetNotificationsService],

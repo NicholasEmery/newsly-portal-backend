@@ -24,18 +24,18 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@nestjs/cache-manager": "^3.1.0",
-    "@nestjs/common": "^11.0.1",
-    "@nestjs/config": "^4.0.2",
-    "@nestjs/core": "^11.0.1",
+    "@fastify/multipart": "^10.0.0",
+    "@nestjs/common": "^11.1.27",
+    "@nestjs/config": "^4.0.4",
+    "@nestjs/core": "^11.1.27",
     "@nestjs/jwt": "^11.0.2",
+    "@nestjs/mapped-types": "^2.1.1",
     "@nestjs/passport": "^11.0.5",
-    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-fastify": "^11.1.27",
     "@nestjs/swagger": "^11.2.3",
     "@prisma/client": "^6.19.1",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
-    "cache-manager-redis-store": "^3.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "cookie-parser": "^1.4.7",
@@ -44,8 +44,7 @@
     "handlebars": "^4.7.8",
     "libsodium-wrappers": "^0.7.16",
     "mime-types": "^3.0.2",
-    "multer": "^2.0.2",
-    "nodemailer": "^8.0.9",
+    "nodemailer": "^9.0.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
@@ -58,9 +57,9 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
-    "@nestjs/cli": "^11.0.0",
-    "@nestjs/schematics": "^11.0.0",
-    "@nestjs/testing": "^11.0.1",
+    "@nestjs/cli": "^11.0.23",
+    "@nestjs/schematics": "^11.1.0",
+    "@nestjs/testing": "^11.1.27",
     "@types/bcrypt": "^5.0.2",
     "@types/express": "^5.0.6",
     "@types/file-type": "^10.6.0",
@@ -117,5 +116,9 @@
       "^@generated/(.*)$": "<rootDir>/generated/$1",
       "^src/(.*)$": "<rootDir>/src/$1"
     }
+  },
+  "overrides": {
+    "postcss": "8.5.13",
+    "js-yaml": "4.2.0"
   }
 }

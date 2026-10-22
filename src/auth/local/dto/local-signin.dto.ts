@@ -2,11 +2,11 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsEmail, MinLength } from "class-validator";
 
 export class UserLocalSignInDto {
-  @ApiProperty({ example: "user@email.com", description: "Email do usuário" })
+  @ApiProperty({ example: "nicholas@example.com", description: "Email da conta local." })
   @IsEmail()
   email!: string;
 
-  @ApiProperty({ example: "senha123", minLength: 6, description: "Senha do usuário" })
+  @ApiProperty({ example: "StrongPass123", minLength: 6, description: "Senha em texto puro enviada na autenticação." })
   @MinLength(6)
   password!: string;
 }

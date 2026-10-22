@@ -6,7 +6,7 @@ import { GetPostsService } from "./get-posts.service";
 @Module({
   imports: [PrismaModule],
   controllers: [GetPostsController],
-  // providers: [GetPostsService],
+  providers: [GetPostsService],
   exports: [GetPostsService],
 })
 export class GetPostsModule {}

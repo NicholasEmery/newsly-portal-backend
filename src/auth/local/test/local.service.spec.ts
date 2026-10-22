@@ -1,7 +1,6 @@
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Test, TestingModule } from "@nestjs/testing";
-import { Cache } from "cache-manager";
 import { EmailService } from "src/common/services/email/email.service";
+import { RedisCacheService } from "src/common/services/cache/redis-cache.service";
 import { PrismaService } from "src/database/prisma.service";
 import { CreateUsersService } from "src/users/create-users/create-users.service";
 import { SessionDto } from "../../dto/session.dto";
@@ -81,7 +80,7 @@ describe("LocalService", () => {
           useValue: mockTokenHelper,
         },
         {
-          provide: CACHE_MANAGER,
+          provide: RedisCacheService,
           useValue: mockCacheManager,
         },
       ],
@@ -93,7 +92,7 @@ describe("LocalService", () => {
     module.get<CreateUsersService>(CreateUsersService);
     module.get<EmailService>(EmailService);
     module.get<TokenHelper>(TokenHelper);
-    module.get<Cache>(CACHE_MANAGER);
+    module.get<RedisCacheService>(RedisCacheService);
 
     jest.clearAllMocks();
   });

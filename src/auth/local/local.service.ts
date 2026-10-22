@@ -1,6 +1,4 @@
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
-import { Injectable, Inject, BadRequestException, NotFoundException } from "@nestjs/common";
-import { Cache } from "cache-manager";
+import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { EmailService } from "src/common/services/email/email.service";
 import { PrismaService } from "src/database/prisma.service";
 import { CreateUsersService } from "src/users/create-users/create-users.service";
@@ -10,6 +8,7 @@ import { UserLocalSignUpDto } from "./dto/local-signup.dto";
 import { SessionDto } from "../dto/session.dto";
 import { TokenHelper } from "../util/generateTokens";
 import { resolveFrontendUrl } from "src/common/config/environment";
+import { RedisCacheService } from "src/common/services/cache/redis-cache.service";
 
 type LocalSignupCachePayload = {
   localUser: UserLocalSignUpDto;
@@ -49,7 +48,7 @@ export class LocalService {
     private readonly prisma: PrismaService,
     private readonly tokensService: TokensService,
     private readonly userService: CreateUsersService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly cacheManager: RedisCacheService,
     private readonly emailService: EmailService,
     private readonly tokenHelper: TokenHelper,
   ) {}

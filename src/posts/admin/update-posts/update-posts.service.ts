@@ -3,6 +3,7 @@
 import { Post } from "@generated/prisma/browser";
 import { PostStatus, Role, RequestStatus } from "@generated/prisma/enums";
 import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
+import type { Prisma } from "../../../../generated/prisma/client";
 // PrismaService: Acesso ao banco de dados
 import { RequestEditDto } from "./dto/request-edit.dto";
 import { UpdateCreationStatusDto } from "./dto/update-creation-status.dto";
@@ -80,7 +81,7 @@ export class UpdatePostsService {
         postId,
         requesterId: userId,
         targetRole,
-        proposedChanges: proposed as unknown as Record<string, unknown>,
+        proposedChanges: proposed as Prisma.InputJsonValue,
         status: RequestStatus.PENDING,
       },
     });
@@ -131,7 +132,7 @@ export class UpdatePostsService {
           postId: request.postId,
           requesterId: userId, // Creator
           targetRole: Role.ADMIN,
-          proposedChanges: filteredChanges as unknown as Record<string, unknown>, // Usar mudanças filtradas
+          proposedChanges: filteredChanges as Prisma.InputJsonValue, // Usar mudanças filtradas
           status: RequestStatus.PENDING,
         },
       });

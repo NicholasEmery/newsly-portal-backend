@@ -1,6 +1,4 @@
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
-import { Injectable, Inject, BadRequestException, NotFoundException } from "@nestjs/common";
-import { Cache } from "cache-manager";
+import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { EmailService } from "src/common/services/email/email.service";
 import { PrismaService } from "src/database/prisma.service";
 import { CreateUsersService } from "src/users/create-users/create-users.service";
@@ -9,6 +7,7 @@ import { SessionDto } from "../dto/session.dto";
 import { TokensService } from "../tokens.service";
 import { TokenHelper } from "../util/generateTokens";
 import { resolveFrontendUrl } from "src/common/config/environment";
+import { RedisCacheService } from "src/common/services/cache/redis-cache.service";
 
 type GoogleLinkCachePayload = {
   userId: string;
@@ -40,7 +39,7 @@ export class GoogleService {
     private readonly prisma: PrismaService,
     private readonly userService: CreateUsersService,
     private readonly tokensService: TokensService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly cacheManager: RedisCacheService,
     private readonly emailService: EmailService,
     private readonly tokenHelper: TokenHelper,
   ) {}

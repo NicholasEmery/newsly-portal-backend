@@ -1,9 +1,9 @@
-// Importações para o controller de edição de posts
-// Controller: Decorator para controlador
 import { Role } from "@generated/prisma/enums";
-import { Controller, Put, Body, UseGuards, Request, Param, Patch, HttpCode, Query } from "@nestjs/common";
+import { Body, Controller, HttpCode, Param, Patch, Put, Query, Request, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiQuery, ApiTags, getSchemaPath } from "@nestjs/swagger";
 // AuthGuard: Guarda de autenticação
 import { AuthenticatedRequest } from "src/common/interfaces/auth.interface";
+import { ApproveRejectDto } from "../delete-posts/dto/approve-reject.dto";
 import { RequestEditDto } from "./dto/request-edit.dto";
 import { UpdateCreationStatusDto } from "./dto/update-creation-status.dto";
 import { UpdatePostDto } from "./dto/update-post.dto";
@@ -22,6 +22,8 @@ import { RolesGuard } from "../../../common/guards/roles.guard";
 // Caso de uso: Colaboradores editando posts
 @Controller("posts")
 @UseGuards(AuthGuard, RolesGuard)
+@ApiExtraModels(UpdatePostDto, RequestEditDto, ApproveRejectDto)
+@ApiTags("Posts")
 export class UpdatePostsController {
   // Construtor: Injeta UpdatePostsService
   constructor(private readonly updatePostsService: UpdatePostsService) {}
@@ -32,6 +34,21 @@ export class UpdatePostsController {
   // Exemplo: PUT /posts/post1 { title: 'Novo Título' }
   @Put(":id")
   @Roles(Role.ADMIN, Role.CREATOR, Role.COLLABORATOR)
+  @ApiBearerAuth("bearer")
+  @ApiOperation({
+    summary: "Atualizar post ou solicitar edição",
+    description: "Admin atualiza diretamente; creator e collaborator seguem o fluxo de solicitação de edição.",
+  })
+  @ApiParam({ name: "id", example: "post-uuid-1" })
+  @ApiBody({
+    description: "Payload aceito depende da role do usuário.",
+    schema: {
+      oneOf: [
+        { $ref: getSchemaPath(UpdatePostDto) },
+        { $ref: getSchemaPath(RequestEditDto) },
+      ],
+    },
+  })
   async editPost(
     @Request() req: AuthenticatedRequest,
     @Param("id") postId: string,
@@ -48,10 +65,17 @@ export class UpdatePostsController {
   // Exemplo: PATCH /posts/editing/req1/approve
   @Patch("editing/:id/approve")
   @UseGuards(AuthGuard)
+  @ApiBearerAuth("bearer")
+  @ApiOperation({
+    summary: "Aprovar edição de post",
+    description: "Aprova uma solicitação de edição pendente e registra o motivo opcional.",
+  })
+  @ApiParam({ name: "id", example: "edit-request-uuid-1" })
+  @ApiBody({ type: ApproveRejectDto })
   async approveEdit(
     @Request() req: AuthenticatedRequest,
     @Param("id") requestId: string,
-    @Body() body: { reason?: string },
+    @Body() body: ApproveRejectDto,
   ) {
     return this.updatePostsService.approveEdit(req.user.id, req.user.role, requestId, body.reason);
   }
@@ -62,10 +86,17 @@ export class UpdatePostsController {
   // Exemplo: PATCH /posts/editing/req1/reject
   @Patch("editing/:id/reject")
   @UseGuards(AuthGuard)
+  @ApiBearerAuth("bearer")
+  @ApiOperation({
+    summary: "Rejeitar edição de post",
+    description: "Rejeita uma solicitação de edição pendente e registra o motivo opcional.",
+  })
+  @ApiParam({ name: "id", example: "edit-request-uuid-1" })
+  @ApiBody({ type: ApproveRejectDto })
   async rejectEdit(
     @Request() req: AuthenticatedRequest,
     @Param("id") requestId: string,
-    @Body() body: { reason?: string },
+    @Body() body: ApproveRejectDto,
   ) {
     return this.updatePostsService.rejectEdit(req.user.id, requestId, body.reason);
   }
@@ -77,6 +108,13 @@ export class UpdatePostsController {
   @Patch("published/:id/status")
   @HttpCode(200)
   @Roles(Role.ADMIN)
+  @ApiBearerAuth("bearer")
+  @ApiOperation({
+    summary: "Atualizar status de criação de post",
+    description: "Admin aprova ou rejeita uma requisição de criação e pode publicar o post automaticamente.",
+  })
+  @ApiParam({ name: "id", example: "creation-request-uuid-1" })
+  @ApiQuery({ name: "status", enum: ["APPROVED", "REJECTED"], example: "APPROVED" })
   async updateCreationStatus(
     @Request() req: AuthenticatedRequest,
     @Param("id") requestId: string,

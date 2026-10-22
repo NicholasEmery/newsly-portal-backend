@@ -2,6 +2,7 @@
 // Injectable: Decorator para injeção de dependências
 import { Role, RequestStatus, CollaboratorPermission } from "@generated/prisma/enums";
 import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
+import type { Prisma } from "../../../generated/prisma/client";
 // PrismaService: Acesso ao banco de dados
 import { UpdatePostDto } from "./dto/update-post.dto";
 import { PrismaService } from "../../database/prisma.service";
@@ -44,7 +45,7 @@ export class UpdatePostsService {
         postId,
         requesterId: userId,
         targetRole: Role.CREATOR,
-        proposedChanges: JSON.parse(JSON.stringify(dto)) as unknown as Record<string, unknown>,
+        proposedChanges: JSON.parse(JSON.stringify(dto)) as Prisma.InputJsonValue,
       },
     });
   }
@@ -72,10 +73,20 @@ export class UpdatePostsService {
       throw new ForbiddenException("No permission to edit");
     }
 
-    const safeDto = JSON.parse(JSON.stringify(dto)) as unknown as Record<string, unknown>;
+    const safeDto = JSON.parse(JSON.stringify(dto)) as Partial<UpdatePostDto>;
+    const updateData: Prisma.PostUpdateInput = {};
+
+    if (typeof safeDto.title === "string") updateData.title = safeDto.title;
+    if (typeof safeDto.content === "string") updateData.content = safeDto.content;
+    if (typeof safeDto.imageUrl === "string") updateData.imageUrl = safeDto.imageUrl;
+    if (typeof safeDto.image === "string") updateData.imageUrl = safeDto.image;
+    if (Array.isArray(safeDto.categories)) updateData.categories = safeDto.categories as Prisma.PostUpdateInput["categories"];
+    if (Array.isArray(safeDto.tags)) updateData.tags = safeDto.tags as Prisma.PostUpdateInput["tags"];
+    if (safeDto.status) updateData.status = safeDto.status;
+
     return this.prisma.post.update({
       where: { id: postId },
-      data: safeDto,
+      data: updateData,
     });
   }
 
@@ -95,9 +106,18 @@ export class UpdatePostsService {
 
     // Aplica mudanças
     const changes = request.proposedChanges as Record<string, unknown>;
+    const updateData: Prisma.PostUpdateInput = {};
+
+    if (typeof changes.title === "string") updateData.title = changes.title;
+    if (typeof changes.content === "string") updateData.content = changes.content;
+    if (typeof changes.image === "string") updateData.imageUrl = changes.image;
+    if (typeof changes.imageUrl === "string") updateData.imageUrl = changes.imageUrl;
+    if (Array.isArray(changes.categories)) updateData.categories = changes.categories as Prisma.PostUpdateInput["categories"];
+    if (Array.isArray(changes.tags)) updateData.tags = changes.tags as Prisma.PostUpdateInput["tags"];
+    if (typeof changes.status === "string") updateData.status = changes.status as Prisma.PostUpdateInput["status"];
     await this.prisma.post.update({
       where: { id: request.postId },
-      data: changes as unknown as Record<string, unknown>,
+      data: updateData,
     });
 
     // Atualiza request

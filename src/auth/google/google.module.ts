@@ -1,4 +1,3 @@
-import { CacheModule } from "@nestjs/cache-manager";
 import { Module } from "@nestjs/common";
 import { EmailService } from "src/common/services/email/email.service";
 import { GoogleController } from "./google.controller";
@@ -10,7 +9,7 @@ import { CreateUsersModule } from "../../users/create-users/create-users.module"
 import { TokenHelper } from "../util/generateTokens";
 
 @Module({
-  imports: [PrismaModule, CreateUsersModule, CacheModule.register()],
+  imports: [PrismaModule, CreateUsersModule],
   providers: [GoogleStrategy, GoogleOauthGuard, GoogleService, TokenHelper, EmailService],
   controllers: [GoogleController],
   exports: [GoogleStrategy, GoogleOauthGuard, GoogleService],

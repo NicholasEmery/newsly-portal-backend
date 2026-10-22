@@ -1,33 +1,66 @@
 import { Controller, Get } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { SystemService } from "./system.service";
 
-@ApiTags("System")
 @Controller("api")
+@ApiTags("System")
 export class SystemController {
   constructor(private readonly systemService: SystemService) {}
 
+  @Get("compatibility")
+  @ApiOperation({
+    summary: "Contrato de compatibilidade da API",
+    description:
+      "Expõe a release ativa e a faixa de contratos de frontend aceita para bloqueios de deploy e diagnóstico operacional.",
+  })
+  @ApiOkResponse({
+    description: "Metadados públicos de compatibilidade da release ativa.",
+    schema: {
+      example: {
+        service: "newsly-backend",
+        release: { id: "<sha>-<run>-<attempt>", sha: "<commit-sha>" },
+        contract: { api: "2026.1", frontend: { minimum: "2026.1", maximum: "2026.1" } },
+      },
+    },
+  })
+  compatibility() {
+    return this.systemService.compatibility();
+  }
+
   @Get("health")
-  @ApiOperation({ summary: "Verifica a saúde da API" })
-  @ApiResponse({
-    status: 200,
-    description: "API está saudável",
-    schema: { example: { status: "ok", service: "newsly-api", featureFlag: "mock-feature-flow" } },
+  @ApiOperation({
+    summary: "Health check",
+    description: "Verifica se o processo HTTP está ativo e expõe um payload simples para monitoramento.",
+  })
+  @ApiOkResponse({
+    description: "Resposta de health check.",
+    schema: {
+      example: {
+        status: "ok",
+        service: "newsly-api",
+        featureFlag: "mock-feature-flow",
+        timestamp: "2026-06-22T12:00:00.000Z",
+      },
+    },
   })
   health() {
     return this.systemService.checkHealth();
   }
 
   @Get("ready")
-  @ApiOperation({ summary: "Verifica se a API está pronta (dependências OK)" })
-  @ApiResponse({
-    status: 200,
-    description: "API está pronta e todas as dependências estão OK",
-    schema: { example: { status: "ready" } },
+  @ApiOperation({
+    summary: "Readiness check",
+    description: "Tenta acessar o banco para confirmar se a aplicação está pronta para receber tráfego.",
   })
-  @ApiResponse({
-    status: 503,
-    description: "API não está pronta - alguma dependência falhou",
+  @ApiOkResponse({
+    description: "Aplicação pronta.",
+    schema: {
+      example: {
+        status: "ready",
+        service: "newsly-api",
+        timestamp: "2026-06-22T12:00:00.000Z",
+      },
+    },
   })
   ready() {
     return this.systemService.checkReadiness();
